@@ -49,7 +49,7 @@ def main():
 def run_fanorona_3X3():
     """Plays a round of game Fanorona each time this function is called.
     """
-    main_grid = get_new_grid_3X3()  # 2-dimensional array to stores information of all tokens
+    main_grid = get_new_grid_3X3()  # 2-dimensional array to store information of all tokens
     draw_grid(main_grid)
     global difficulty
     difficulty = enter_player_difficulty()

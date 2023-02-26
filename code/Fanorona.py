@@ -13,7 +13,7 @@ from pygame.locals import *
 from Board import Board
 
 
-cols = 5
+cols = 9
 rows = 5
 my_board = Board(cols,rows)
 
@@ -58,7 +58,7 @@ def main():
 def run_fanorona():
     # Plays a round of game Fanorona each time this function is called.
 
-    main_grid = Board.get_new_grid(my_board.GRID_COLS, my_board.GRID_ROWS)  # 2-dimensional array to stores information of all tokens
+    main_grid = my_board.get_new_grid()  # 2-dimensional array to stores information of all tokens
     draw_grid(main_grid)
 
     global difficulty
@@ -88,7 +88,7 @@ def run_fanorona():
     while True:  # main game loop
         if turn == 'Human':  # Keep looping for player and computer's turns.
             print("Human's turn")
-            human_movable_token_table = Board.get_movable_token_information(human_token, main_grid)
+            human_movable_token_table = my_board.get_movable_token_information(human_token, main_grid)
             if human_movable_token_table == {}:
                 show_game_results('AI', 'You Human')
             check_for_draw(main_grid, turn)
@@ -167,7 +167,7 @@ def run_fanorona():
             print("AI's turn\n")
             print(("AI_state: \n", main_grid,'\n\n'))
 
-            AI_movable_token_table = Board.get_movable_token_information(AI_token, main_grid, False)
+            AI_movable_token_table = my_board.get_movable_token_information(AI_token, main_grid, False)
             if AI_movable_token_table == {}:
                 show_game_results('You Human', 'AI')
             check_for_draw(main_grid, turn)
@@ -256,7 +256,7 @@ def max_value(AI_state, alpha, beta, depth):
         print("return since max_value terminated ")
         return utility(AI_state)
 
-    AI_movable_token_table = Board.get_movable_token_information(AI_token, AI_state, False)
+    AI_movable_token_table = my_board.get_movable_token_information(AI_token, AI_state, False)
     current_v = float('-inf')
     for start_grid_coord in list(AI_movable_token_table.keys()):
         for end_grid_coord in list(AI_movable_token_table[start_grid_coord].keys()):
@@ -302,7 +302,7 @@ def min_value(AI_state, alpha, beta, depth):
         return utility(AI_state)
 
 
-    AI_movable_token_table = Board.get_movable_token_information(human_token, AI_state, False)
+    AI_movable_token_table = my_board.get_movable_token_information(human_token, AI_state, False)
 
     current_v = float('inf')
     for start_grid_coord in list(AI_movable_token_table.keys()):
@@ -465,9 +465,10 @@ def translate_grid_to_pixel_coord(xxx_todo_changeme):
         x = grid_column * int(WINDOW_HEIGHT*0.125) + int(WINDOW_HEIGHT*0.25),\
             grid_row * int(WINDOW_WIDTH*0.125) + int(WINDOW_WIDTH*0.25)
     
-    #if cols == 9:
-     #solve me
-        
+    if cols == 9:
+        x = grid_column * int(WINDOW_HEIGHT*0.0625) + int(WINDOW_HEIGHT*0.25),\
+            grid_row * int(WINDOW_WIDTH*0.125) + int(WINDOW_WIDTH*0.25)        
+
     return x
 
 
@@ -491,9 +492,9 @@ def make_move(token_color, grid, xxx_todo_changeme2, xxx_todo_changeme3, prompt_
     (click_x, click_y) = xxx_todo_changeme2
     (move_x, move_y) = xxx_todo_changeme3
     if token_color == human_token:
-        movable_token_table = Board.get_movable_token_information(token_color, grid)
+        movable_token_table = my_board.get_movable_token_information(token_color, grid)
     else:
-        movable_token_table = Board.get_movable_token_information(token_color, grid, False)
+        movable_token_table = my_board.get_movable_token_information(token_color, grid, False)
 
 
 
@@ -544,12 +545,12 @@ def make_move(token_color, grid, xxx_todo_changeme2, xxx_todo_changeme3, prompt_
     if movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'approach':  # approach capture
         grid[click_x + 2*delta_x][click_y + 2*delta_y]['token_color'] = EMPTY
 
-        if Board.is_within_grid(click_x + 3*delta_x, click_y + 3*delta_y, cols, rows) and \
+        if my_board.is_within_grid(click_x + 3*delta_x, click_y + 3*delta_y) and \
             grid[click_x + 3*delta_x][click_y + 3*delta_y]['token_color'] != token_color and \
                 grid[click_x + 3*delta_x][click_y + 3*delta_y]['token_color']!= EMPTY:
             grid[click_x + 3*delta_x][click_y + 3*delta_y]['token_color'] = EMPTY
 
-            if Board.is_within_grid(click_x + 4*delta_x, click_y + 4*delta_y, cols, rows) and \
+            if my_board.is_within_grid(click_x + 4*delta_x, click_y + 4*delta_y) and \
                 grid[click_x + 4*delta_x][click_y + 4*delta_y]['token_color'] != token_color and \
                     grid[click_x + 4*delta_x][click_y + 4*delta_y]['token_color']!= EMPTY:
                 grid[click_x + 4*delta_x][click_y + 4*delta_y]['token_color'] = EMPTY
@@ -557,12 +558,12 @@ def make_move(token_color, grid, xxx_todo_changeme2, xxx_todo_changeme3, prompt_
     if movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'withdraw':  # withdraw capture
         grid[click_x - delta_x][click_y - delta_y]['token_color'] = EMPTY
 
-        if Board.is_within_grid(click_x - 2*delta_x, click_y - 2*delta_y, cols, rows) and \
+        if my_board.is_within_grid(click_x - 2*delta_x, click_y - 2*delta_y) and \
             grid[click_x - 2*delta_x][click_y - 2*delta_y]['token_color'] != token_color and \
                 grid[click_x - 2*delta_x][click_y - 2*delta_y]['token_color']!= EMPTY:
             grid[click_x - 2*delta_x][click_y - 2*delta_y]['token_color'] = EMPTY
 
-            if Board.is_within_grid(click_x - 3*delta_x, click_y - 3*delta_y, cols, rows) and \
+            if my_board.is_within_grid(click_x - 3*delta_x, click_y - 3*delta_y) and \
                 grid[click_x - 3*delta_x][click_y - 3*delta_y]['token_color'] != token_color and \
                     grid[click_x - 3*delta_x][click_y - 3*delta_y]['token_color']!= EMPTY:
                 grid[click_x - 3*delta_x][click_y - 3*delta_y]['token_color'] = EMPTY

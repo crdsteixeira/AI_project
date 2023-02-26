@@ -8,7 +8,7 @@ class Screen:
         self.titles = {
             'mode': {'Which game mode do you want to chose?': ["Human vs Human", "Computer vs Human",
                                                                "Computer vs Computer"]},
-            'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "5 X 9"]},
+            'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "9 X 5"]},
             'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]},
             'token': {'White always goes first. Do you want to be white or black?': ["White", "Black"]},
         }
@@ -117,10 +117,19 @@ class Screen:
             self.main_clock.tick(config.FPS)
 
     def draw_grid(self, grid, board):
+        if board.GRID_COLS == 3:
+            BG_IMAGE = pygame.image.load('./images/ThreeByThree.png')
+        if board.GRID_COLS == 5:
+            BG_IMAGE = pygame.image.load('./images/FiveByFive.png')
+        if board.GRID_COLS == 9:
+            BG_IMAGE = pygame.image.load('./images/NineByFive.png')
+
+        BG_IMAGE = pygame.transform.smoothscale(BG_IMAGE,
+                                                (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.5)))
         self.WINDOW_SURF.fill(config.WHITE)
-        # self.WINDOW_SURF.blit(
-        #     BG_IMAGE,
-        #     (int(config.WINDOW_WIDTH * 0.25), int(config.WINDOW_HEIGHT * 0.25)))
+        self.WINDOW_SURF.blit(
+            BG_IMAGE,
+            (int(config.WINDOW_WIDTH * 0.25), int(config.WINDOW_HEIGHT * 0.25)))
 
         for column in range(board.GRID_COLS):
             for row in range(board.GRID_ROWS):
@@ -153,7 +162,7 @@ class Screen:
             x = grid_column * int(config.WINDOW_HEIGHT * 0.125) + int(config.WINDOW_HEIGHT * 0.25), \
                 grid_row * int(config.WINDOW_WIDTH * 0.125) + int(config.WINDOW_WIDTH * 0.25)
 
-        # if cols == 9:
-        # solve me
-
+        if board.GRID_COLS == 9:
+            x = grid_column * int(config.WINDOW_HEIGHT * 0.0625) + int(config.WINDOW_HEIGHT * 0.25), \
+                grid_row * int(config.WINDOW_WIDTH * 0.125) + int(config.WINDOW_WIDTH * 0.25)
         return x

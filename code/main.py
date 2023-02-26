@@ -36,7 +36,7 @@ print(board_size)
 
 
 board = Board(board_size[0], board_size[1])
-grid = board.get_new_grid(board_size[0], board_size[1])
+grid = board.get_new_grid()
 
 while True:
     screen.draw_grid(grid, board)

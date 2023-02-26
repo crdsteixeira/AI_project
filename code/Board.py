@@ -7,17 +7,17 @@ from pygame.locals import *
 from copy import deepcopy
 
 
-import main
+import config
 
 #colors         
-WHITE      = main.WHITE 
-BLACK      = main.BLACK    
-GREEN      = main.GREEN 
-RED        = main.RED  
-EMPTY      = main.EMPTY
+WHITE      = config.WHITE 
+BLACK      = config.BLACK    
+GREEN      = config.GREEN 
+RED        = config.RED  
+EMPTY      = config.EMPTY
 
-WINDOW_WIDTH = main.WINDOW_WIDTH # width of the program's window, in pixels
-WINDOW_HEIGHT = main.WINDOW_HEIGHT  # height in pixels
+WINDOW_WIDTH = config.WINDOW_WIDTH # width of the program's window, in pixels
+WINDOW_HEIGHT = config.WINDOW_HEIGHT  # height in pixels
 
 
 class Board:
@@ -26,19 +26,6 @@ class Board:
         self.GRID_SIZE = 50  # size of the beads
         self.GRID_COLS = cols  # how many columns of grid on the game board
         self.GRID_ROWS = rows  # how many rows of spaces on the game board
-
-        # if self.GRID_COLS == 3:
-        #     img = '../images/ThreeByThree.png'
-        # elif self.GRID_COLS == 5:
-        #     img = '../images/FiveByFive.png'
-        # elif self.GRID_COLS == 9:
-        #     img = '../images/NineByFive.png'
-
-        # self.BG_IMAGE = pygame.image.load(img)
-        # self.BG_IMAGE = pygame.transform.scale(self.BG_IMAGE, (int(WINDOW_WIDTH * 0.5), int(WINDOW_HEIGHT * 0.5)))
-        # self.SMALL_FONT = pygame.font.Font(None, 20)
-        # self.BIG_FONT = pygame.font.Font(None, 40)
-
 
 
     def get_new_grid(self):

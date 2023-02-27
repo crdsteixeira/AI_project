@@ -18,7 +18,7 @@ rows = 5
 my_board = Board(cols,rows)
 
 
-FPS = 20  # frames per second to update the screen
+FPS = 20  # frames per second to update the game
 WINDOW_WIDTH = 800  # width of the program's window, in pixels
 WINDOW_HEIGHT = 800  # height in pixels
 

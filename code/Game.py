@@ -1,16 +1,41 @@
+''''
+
+AI - MECD - FEUP
+February 2023
+Rojan Aslani, Catia Teixeira
+
+Game.py:
+
+Functions:
+
+- draw_option
+- draw_all_options
+- draw_readytostart
+- draw_initial_screen
+- draw_grid
+- draw_circle
+- translate_grid_to_pixel_coord
+- get_grid_clicked
+- mave_move: TODO bidirect when its AI turn
+- show_game_results: TODO
+- check for draw: TODO
+'''
+
 import pygame
 import sys
 import config
 
 
-class Screen:
+class Game:
     def __init__(self, WINDOW_SURF, main_clock, FONT):
         self.titles = {
             'mode': {'Which game mode do you want to chose?': ["Human vs Human", "Computer vs Human",
                                                                "Computer vs Computer"]},
+            'algorithm':{'Which AI algorithm do you want to play with?': ['Minimax_AlphaBeta', 'Monte_Carlo_TS']},
             'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "9 X 5"]},
             'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]},
             'token': {'White always goes first. Do you want to be white or black?': ["White", "Black"]},
+
         }
         self.WINDOW_SURF = WINDOW_SURF
         self.main_clock = main_clock
@@ -20,6 +45,8 @@ class Screen:
         self.button_x = config.WINDOW_WIDTH - self.button_width - 10
         self.button_y = config.WINDOW_HEIGHT - self.button_height - 10
         self.selected_options = {}
+
+
 
     def draw_option(self, key, title, options, y):
         # Choose game mode
@@ -34,7 +61,7 @@ class Screen:
         for opt in options:
             surf = self.FONT.render(opt, True, config.BLACK)
             rect = surf.get_rect()
-            rect.center = (int(config.WINDOW_WIDTH * x), int(config.WINDOW_HEIGHT * (y + 0.1)))
+            rect.center = (int(config.WINDOW_WIDTH * x), int(config.WINDOW_HEIGHT * (y + 0.05)))
             selected = self.selected_options.get(key, None) == opt
             text_list.append((key, surf, rect, opt, selected, True))
             x += delta_x
@@ -43,7 +70,7 @@ class Screen:
 
     def draw_all_options(self):
         y = 0.1
-        delta_y = (1 / len(self.titles))
+        delta_y = (1 / (len(self.titles)+1))
         text_list = []
         for key, value in self.titles.items():
             for title, options in value.items():
@@ -79,7 +106,7 @@ class Screen:
             button_rect = button_text.get_rect(center=(self.button_width / 2, self.button_height / 2))
             button_surface.blit(button_text, button_rect)
 
-            # blit the button surface onto the screen surface
+            # blit the button surface onto the game surface
             self.WINDOW_SURF.blit(button_surface, (self.button_x, self.button_y))
 
             for opt in text_list:
@@ -89,7 +116,7 @@ class Screen:
                         new_surf = self.FONT.render(text, True, color)
                         self.WINDOW_SURF.blit(new_surf, rect)
                         opt[i] = (
-                        key, new_surf, rect, text, selected, selectable)  # update the text_list to reflect changes
+                            key, new_surf, rect, text, selected, selectable)  # update the text_list to reflect changes
                     else:
                         self.WINDOW_SURF.blit(surf, rect)
             for event in pygame.event.get():  # event handling loop
@@ -116,19 +143,25 @@ class Screen:
             pygame.display.update()
             self.main_clock.tick(config.FPS)
 
+    def draw_circle(self, board, coords, text, color):  # print coords on board
+        pcolor = pygame.Color(color)
+        text_f = self.FONT.render(text, True, pygame.Color(255, 255, 255) - pcolor)
+        pygame.draw.circle(self.WINDOW_SURF, color, coords, int(board.GRID_SIZE * 0.5))
+        self.WINDOW_SURF.blit(text_f, text_f.get_rect(center=coords))
+
     def draw_grid(self, grid, board):
         if board.GRID_COLS == 3:
-            BG_IMAGE = pygame.image.load('./images/ThreeByThree.png')
+            bg_image = pygame.image.load('./images/ThreeByThree.png')
         if board.GRID_COLS == 5:
-            BG_IMAGE = pygame.image.load('./images/FiveByFive.png')
+            bg_image = pygame.image.load('./images/FiveByFive.png')
         if board.GRID_COLS == 9:
-            BG_IMAGE = pygame.image.load('./images/NineByFive.png')
+            bg_image = pygame.image.load('./images/NineByFive.png')
 
-        BG_IMAGE = pygame.transform.smoothscale(BG_IMAGE,
+        bg_image = pygame.transform.smoothscale(bg_image,
                                                 (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.5)))
         self.WINDOW_SURF.fill(config.WHITE)
         self.WINDOW_SURF.blit(
-            BG_IMAGE,
+            bg_image,
             (int(config.WINDOW_WIDTH * 0.25), int(config.WINDOW_HEIGHT * 0.25)))
 
         for column in range(board.GRID_COLS):
@@ -136,11 +169,14 @@ class Screen:
                 center_pixel_coord = self.translate_grid_to_pixel_coord((column, row), board)
                 # draw token with outline
                 if grid[column][row]['token_color'] != config.EMPTY:
-                    pygame.draw.circle(
-                        self.WINDOW_SURF,
-                        grid[column][row]['token_color'],
-                        center_pixel_coord,
-                        int(board.GRID_SIZE * 0.5))
+                    # print coords on board
+                    self.draw_circle(board, center_pixel_coord, "{0}, {1}".format(column, row),
+                                     grid[column][row]['token_color'])
+                    #pygame.draw.circle(
+                    #    self.WINDOW_SURF,
+                    #    grid[column][row]['token_color'],
+                    ##    center_pixel_coord,
+                    #   int(board.GRID_SIZE * 0.5))
 
                     pygame.draw.circle(
                         self.WINDOW_SURF,
@@ -148,6 +184,10 @@ class Screen:
                         center_pixel_coord,
                         int(board.GRID_SIZE * 0.5),
                         2)
+                else:
+                    # print coords on board
+                    self.draw_circle(board, center_pixel_coord, "{0}, {1}".format(column, row),
+                                     config.GRAY)
 
         self.main_clock.tick(config.FPS)
         pygame.display.update()
@@ -166,3 +206,102 @@ class Screen:
             x = grid_column * int(config.WINDOW_HEIGHT * 0.0625) + int(config.WINDOW_HEIGHT * 0.25), \
                 grid_row * int(config.WINDOW_WIDTH * 0.125) + int(config.WINDOW_WIDTH * 0.25)
         return x
+
+    def get_grid_clicked(self, coords, board):
+        """ Return a tuple of two integers of the grid space coordinates where
+        the mouse was clicked. (Or returns None not in any space.)
+        """
+        (mouse_x, mouse_y) = coords
+        for column in range(board.GRID_COLS):
+            for row in range(board.GRID_ROWS):
+                (center_x, center_y) = self.translate_grid_to_pixel_coord((column, row), board)
+                if (center_x - int(board.GRID_SIZE * 0.5) < mouse_x < center_x + int(board.GRID_SIZE * 0.5) and
+                        center_y - int(board.GRID_SIZE * 0.5) < mouse_y < center_y + int(board.GRID_SIZE * 0.5)):
+                    print(column, row)
+                    return column, row
+        return None
+
+    def make_move(self, token_color, grid, initial_token_coords, final_token_coords, board, prompt_bi_direct=False):
+        (click_x, click_y) = initial_token_coords
+        (move_x, move_y) = final_token_coords
+        movable_token_table = board.get_movable_token_information(token_color, grid, prompt_bi_direct)
+
+        grid[click_x][click_y]['token_color'] = config.EMPTY
+        grid[move_x][move_y]['token_color'] = token_color
+
+        if prompt_bi_direct and movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'bi-direction':
+            text_surf = self.FONT.render('Do you choose to approach or withdraw~?', True, config.BLACK)
+            text_rect = text_surf.get_rect()
+            text_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.875))
+
+            approach_surf = self.FONT.render('Approach', True, config.BLACK)
+            approach_rect = approach_surf.get_rect()
+            approach_rect.center = (int(config.WINDOW_WIDTH * 0.375), int(config.WINDOW_HEIGHT * 0.9375))
+
+            withdraw_surf = self.FONT.render('Withdraw', True, config.BLACK)
+            withdraw_rect = withdraw_surf.get_rect()
+            withdraw_rect.center = (int(config.WINDOW_WIDTH * 0.625), int(config.WINDOW_HEIGHT * 0.9375))
+
+            is_chosen = False
+            while not is_chosen:  # prompt the Human player to choose between approach or withdraw capture
+                self.main_clock.tick(config.FPS)
+                for event in pygame.event.get():
+                    self.main_clock.tick(config.FPS)
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_x, mouse_y = event.pos
+                        if approach_rect.collidepoint((mouse_x, mouse_y)):
+                            movable_token_table[(click_x, click_y)][(move_x, move_y)] = 'approach'
+                            is_chosen = True
+                            break
+                        elif withdraw_rect.collidepoint((mouse_x, mouse_y)):
+                            movable_token_table[(click_x, click_y)][(move_x, move_y)] = 'withdraw'
+                            is_chosen = True
+                            break
+
+                self.WINDOW_SURF.blit(text_surf, text_rect)
+                self.WINDOW_SURF.blit(approach_surf, approach_rect)
+                self.WINDOW_SURF.blit(withdraw_surf, withdraw_rect)
+                self.main_clock.tick(config.FPS)
+                pygame.display.update()
+                self.main_clock.tick(config.FPS)
+
+        delta_x, delta_y = (move_x - click_x, move_y - click_y)
+
+        # there exist other opponent's token consecutively along on the same direction,
+        # they also will be capture, in a 5X5 grid, maximally THREE in a roll.
+
+        if movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'approach':  # approach capture
+            grid[click_x + 2 * delta_x][click_y + 2 * delta_y]['token_color'] = config.EMPTY
+
+            if board.is_within_grid(click_x + 3 * delta_x, click_y + 3 * delta_y) and \
+                    grid[click_x + 3 * delta_x][click_y + 3 * delta_y]['token_color'] != token_color and \
+                    grid[click_x + 3 * delta_x][click_y + 3 * delta_y]['token_color'] != config.EMPTY:
+                grid[click_x + 3 * delta_x][click_y + 3 * delta_y]['token_color'] = config.EMPTY
+
+                if board.is_within_grid(click_x + 4 * delta_x, click_y + 4 * delta_y) and \
+                        grid[click_x + 4 * delta_x][click_y + 4 * delta_y]['token_color'] != token_color and \
+                        grid[click_x + 4 * delta_x][click_y + 4 * delta_y]['token_color'] != config.EMPTY:
+                    grid[click_x + 4 * delta_x][click_y + 4 * delta_y]['token_color'] = config.EMPTY
+
+        if movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'withdraw':  # withdraw capture
+            grid[click_x - delta_x][click_y - delta_y]['token_color'] = config.EMPTY
+
+            if board.is_within_grid(click_x - 2 * delta_x, click_y - 2 * delta_y) and \
+                    grid[click_x - 2 * delta_x][click_y - 2 * delta_y]['token_color'] != token_color and \
+                    grid[click_x - 2 * delta_x][click_y - 2 * delta_y]['token_color'] != config.EMPTY:
+                grid[click_x - 2 * delta_x][click_y - 2 * delta_y]['token_color'] = config.EMPTY
+
+                if board.is_within_grid(click_x - 3 * delta_x, click_y - 3 * delta_y) and \
+                        grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] != token_color and \
+                        grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] != config.EMPTY:
+                    grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] = config.EMPTY
+
+        print(("Make move from ", (click_x, click_y), ' to ', (move_x, move_y)))
+        print(('\n', '\n', '\n'))
+        return grid
+
+    def show_game_results(self):
+        pass
+
+    def check_for_draw(self):
+        pass

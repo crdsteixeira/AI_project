@@ -1,3 +1,20 @@
+"""
+AI - MECD - FEUP
+February 2023
+Rojan Aslani, Catia Teixeira
+
+Board.py : This class represents the game board, and has methods to place and move pieces, check for valid moves,
+and print the board.
+
+Functions:
+- get_new_grid(...)
+- get_movable_token_information(...)
+- is_within_grid(...)
+- clean_table(...)
+
+"""
+
+
 from numpy import size
 import pygame
 import sys
@@ -617,7 +634,7 @@ class Board:
             if self.is_game_over():
                 self.handle_game_over()
 
-            # Update the screen
+            # Update the game
             pygame.display.update()
             main_clock.tick(FPS)
 

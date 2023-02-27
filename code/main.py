@@ -3,8 +3,8 @@ import sys
 from pygame.locals import *
 from copy import deepcopy
 from Board import Board
-#import Player
-from Game import Screen
+from Player import Human, AI
+from Game import Game
 import config
 
 # Initialize pygame and the main clock
@@ -20,23 +20,45 @@ SMALL_FONT = pygame.font.Font(None, 10)
 BIG_FONT = pygame.font.Font(None, 15)
 
 # Draw Initial Screen
-screen = Screen(WINDOW_SURF, main_clock, BIG_FONT)
+game = Game(WINDOW_SURF, main_clock, BIG_FONT)
 options = []
 while len(options) < 4:
-    options = screen.draw_initial_screen()
+    options = game.draw_initial_screen()
     print(options)
 
 # Draw Board
 game_mode = options['mode']
+algorithm = options['algorithm']
 board_size = [int(n) for n in options['size'].split() if n != 'X']
 difficulty = options['difficulty']
-token = options['token']
+tokens = options['token']
 
+print(tokens)
 print(board_size)
-
 
 board = Board(board_size[0], board_size[1])
 grid = board.get_new_grid()
 
+if game_mode == "Computer vs Human":
+    player_1 = Human(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
+    player_2 = AI(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
+    player_2.initialize_ai_player()
+elif game_mode == "Human vs Human":
+    player_1 = Human(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
+    player_2 = Human(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
+elif game_mode == "Computer vs Computer":
+    player_1 = AI(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
+    player_1.initialize_ai_player()
+    player_2 = AI(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
+    player_2.initialize_ai_player()
+else:
+    sys.exit(0)
+
+turn = config.WHITE
 while True:
-    screen.draw_grid(grid, board)
+    game.draw_grid(grid, board)
+    if player_1.token_color == turn:
+        grid = player_1.make_turn(grid, game)
+    elif player_2.token_color == turn:
+        grid = player_2.make_turn(grid, game)
+    turn = config.WHITE if turn == config.BLACK else config.BLACK

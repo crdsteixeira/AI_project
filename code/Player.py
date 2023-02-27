@@ -1,177 +1,329 @@
+''''
+
+AI - MECD - FEUP
+February 2023
+Rojan Aslani, Catia Teixeira
+
+Player.py:
+
+Functions:
+
+- make_turn: Human
+- make_turn: AI
+- is_within_grid: TODO
+- max_value
+- min_value
+- alpha_beta_search
+- terminal_test
+- utility
+- evaluate_current_state
+
+'''
+import copy
+
+from pygame.locals import *
 import pygame
+import sys
 import random
-from main import *
+import config
 
 
 class Player:
-    def __init__(self, token_color, grid_height, grid_width):
+    def __init__(self, token_color, board, difficulty, algorithm):
         self.token_color = token_color
-        self.GRID_HEIGHT = grid_height
-        self.GRID_WIDTH = grid_width
+        self.board = board
+        self.difficulty = difficulty
+        self.algorithm = algorithm
+        self.ai_player = None
 
-    def is_within_grid(self, x, y):
-        return 0 <= x < self.GRID_WIDTH and 0 <= y < self.GRID_HEIGHT
+    def wait_a_second(self, game, initial_token_coord):
+        pygame.time.wait(1000)
+        pygame.draw.circle(
+            game.WINDOW_SURF,
+            config.GREEN,
+            game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
+            int(self.board.GRID_SIZE * 0.5),
+            10)
 
-    def clean_table(self, move_table):
-        """return a cleaned move table that only consists of valid move.
-        """
-        new_table = {k: v for k, v in move_table.items() if v != {}}
-        return new_table
+        game.main_clock.tick(config.FPS)
+        pygame.display.update()
+        game.main_clock.tick(config.FPS)
 
-    def get_movable_token_information(self, grid, is_prompt_bi_direct_capture=True):
-        """returns a hash table that hashes each movable token
-        coordinate to its own hash table consisting of each accordingly available
-        empty grid coordinates to move hashing to its move type.
-        """
-        capture_move_table = {}
-        paika_move_table = {}
-        has_capture = False  # a flag shows which table to return
+        pygame.time.wait(1000)
 
-        for column in range(self.GRID_WIDTH):
-            for row in range(self.GRID_HEIGHT):
-                if grid[column][row]['token_color'] == self.token_color:
-                    paika_move_table[(column, row)] = {}
-                    capture_move_table[(column, row)] = {}
-                    for (delta_x, delta_y) in grid[column][row]['displacements']:
+    def check_movable_token_table(self, token_color, grid, game):
+        movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
+        if movable_token_table == {}:
+            game.show_game_results()
+        game.check_for_draw()  # TODO
 
-                        # when a token's neighbor is EMPTY, it at least eligible for Paika move
-                        # only after a token in Paika list, it will be test for what kind of
-                        # capture it fits within the boundary of grid.
+        return movable_token_table
 
-                        if grid[column + delta_x][row + delta_y]['token_color'] == EMPTY:
-                            paika_move_table[(column, row)][(column + delta_x, row + delta_y)] = 'paika'
 
-                            if self.is_within_grid(column + 2 * delta_x, row + 2 * delta_y) and \
-                                    grid[column + 2 * delta_x][row + 2 * delta_y]['token_color'] \
-                                    != self.token_color and \
-                                    grid[column + 2 * delta_x][row + 2 * delta_y]['token_color'] \
-                                    != EMPTY:
-                                capture_move_table[(column, row)][(column + delta_x, row + delta_y)] \
-                                    = 'approach'
-                                has_capture = True
+class Human(Player):
+    def make_turn(self, grid, game):
 
-                                if is_prompt_bi_direct_capture and \
-                                        self.is_within_grid(column - delta_x, row - delta_y) and \
-                                        grid[column - delta_x][row - delta_y]['token_color'] \
-                                        != self.token_color and \
-                                        grid[column - delta_x][row - delta_y] \
-                                                ['token_color'] != EMPTY:
-                                    capture_move_table[(column, row)][(column + delta_x, row + delta_y)] \
-                                        = 'bi-direction'
+        human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
 
-                            elif self.is_within_grid(column - delta_x, row - delta_y) and \
-                                    grid[column - delta_x][row - delta_y]['token_color'] \
-                                    != self.token_color and \
-                                    grid[column - delta_x][row - delta_y]['token_color'] \
-                                    != EMPTY:
-                                capture_move_table[(column, row)][(column + delta_x, row + delta_y)] \
-                                    = 'withdraw'
-                                has_capture = True
+        initial_token_coord = None
+        final_token_coord = None
+        while final_token_coord is None:
+            while initial_token_coord is None:
+                for event in pygame.event.get():
+                    game.main_clock.tick(config.FPS)
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_x, mouse_y = event.pos
+                        initial_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
+                        if initial_token_coord not in human_movable_token_table:
+                            initial_token_coord = None
 
-        if has_capture:
-            result_table = self.clean_table(capture_move_table)
-            print('get from movable token information\ncapture table  ', result_table, '\n')
-            return result_table
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+            # when grid got clicked, extra green circle shows it
+            pygame.draw.circle(
+                game.WINDOW_SURF,
+                config.GREEN,
+                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
+                int(self.board.GRID_SIZE * 0.5),
+                10)
 
-        else:
-            result_table = self.clean_table(paika_move_table)
-            print('get from movable token information\npaika table  ', result_table, '\n')
-            return result_table
+            game.main_clock.tick(config.FPS)
+            pygame.display.update()
+            game.main_clock.tick(config.FPS)
 
-    def get_all_tokens_on_grid(self, grid):
-        """Returns a list of all tokens on the grid that match this player's token_color."""
-        tokens = []
-        for row in range(self.GRID_HEIGHT):
-            for col in range(self.GRID_WIDTH):
-                if grid[col][row]['token_color'] == self.token_color:
-                    tokens.append((col, row))
-        return tokens
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-    def get_movable_positions_for_token(self, token, grid):
-        """Returns a list of positions where the token at the given column and row can move to."""
-        movable_positions = []
-        for direction in DIRECTIONS:
-            new_col, new_row = token[0] + direction[0], token[1] + direction[1]
-            if not (0 <= new_col < self.GRID_WIDTH and 0 <= new_row < self.GRID_HEIGHT):
-                continue
-            if grid[new_col][new_row]['token_color'] != EMPTY:
-                continue
-            movable_positions.append((new_col, new_row))
-        return movable_positions
+                if event.type == MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_x, mouse_y = event.pos
+                    final_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
+                    # to detect if the user changes the token he wants to move
+                    if final_token_coord not in human_movable_token_table[initial_token_coord]:
+                        if final_token_coord in human_movable_token_table:
+                            initial_token_coord = final_token_coord
+                            final_token_coord = None
 
-    def make_move(self, token, position, grid):
-        """Updates the given grid with the given move."""
-        new_grid = copy.deepcopy(grid)
-        new_grid[token[0]][token[1]]['token_color'] = EMPTY
-        new_grid[position[0]][position[1]]['token_color'] = self.token_color
+                            game.draw_grid(grid, self.board)
+                            pygame.draw.circle(
+                                game.WINDOW_SURF,
+                                config.GREEN,
+                                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
+                                int(self.board.GRID_SIZE * 0.5),
+                                10)
+
+                            game.main_clock.tick(config.FPS)
+                            pygame.display.update()
+                            game.main_clock.tick(config.FPS)
+                        else:
+                            final_token_coord = None
+
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board, True)
         return new_grid
 
 
-class AIPlayer(Player):
-    def __init__(self, token_color, difficulty):
-        super().__init__(token_color)
-        self.difficulty = difficulty
+class AI(Player):
 
-    def get_next_move(self, grid):
-        if self.difficulty == "easy":
-            return self._get_random_move(grid)
-        elif self.difficulty == "medium":
-            return self._get_minimax_move(grid, depth=3)
-        else:  # self.difficulty == "hard"
-            return self._get_minimax_move(grid, depth=5)
+    def __init__(self, token_color, board, difficulty, algorithm):
+        super().__init__(token_color, board, difficulty, algorithm)
+        self.total_node_generated = 0
+        self.pruning_in_max_value = 0
+        self.pruning_in_min_value = 0
+        self.depth_of_game_tree = 0
+        self.is_cutoff = False
 
-    def _get_random_move(self, grid):
-        tokens = self.get_all_tokens_on_grid(grid)
-        while True:
-            random_token = random.choice(tokens)
-            movable_positions = self.get_movable_positions_for_token(random_token, grid)
-            if movable_positions:
-                return (random_token, random.choice(movable_positions))
+    def initialize_ai_player(self):
+        if self.difficulty == 'Easy':
+            self.ai_player = Random(self.token_color, self.board, self.difficulty, self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta':
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 3, self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
+            pass
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta':
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 7, self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
+            pass
 
-    def _get_minimax_move(self, grid, depth, alpha=float('-inf'), beta=float('inf'), maximizing_player=True):
-        if depth == 0:
-            return None, None, self._evaluate_board(grid)
+    def make_turn(self, grid, game):
+        ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
+        return self.ai_player.play(ai_movable_token_table, game, grid)
 
-        if maximizing_player:
-            best_move = None
-            best_value = float('-inf')
-            tokens = self.get_all_tokens_on_grid(grid)
-            for token in tokens:
-                movable_positions = self.get_movable_positions_for_token(token, grid)
-                for position in movable_positions:
-                    new_grid = copy.deepcopy(grid)
-                    new_grid = self.make_move(token, position, new_grid)
-                    _, _, value = self._get_minimax_move(new_grid, depth-1, alpha, beta, False)
-                    if value > best_value:
-                        best_move = (token, position)
-                        best_value = value
-                    alpha = max(alpha, best_value)
-                    if alpha >= beta:
-                        break  # beta cutoff
-            return best_move[0], best_move[1], best_value
 
-        else:  # minimizing player
-            worst_move = None
-            worst_value = float('inf')
-            tokens = self.get_all_opponent_tokens_on_grid(grid)
-            for token in tokens:
-                movable_positions = self.get_movable_positions_for_token(token, grid)
-                for position in movable_positions:
-                    new_grid = copy.deepcopy(grid)
-                    new_grid = self.make_move(token, position, new_grid)
-                    _, _, value = self._get_minimax_move(new_grid, depth-1, alpha, beta, True)
-                    if value < worst_value:
-                        worst_move = (token, position)
-                        worst_value = value
-                    beta = min(beta, worst_value)
-                    if beta <= alpha:
-                        break  # alpha cutoff
-            return worst_move[0], worst_move[1], worst_value
+class Random(AI):
+    def play(self, ai_movable_token_table, game, grid):
+        initial_token_coord = list(ai_movable_token_table.keys())[0]
+        final_token_coord = list(ai_movable_token_table[initial_token_coord].keys())[0]
 
-    def _evaluate_board(self, grid):
-        opponent_color = self.get_opponent_token_color()
-        own_tokens = self.get_all_tokens_on_grid(grid)
-        opponent_tokens = self.get_all_opponent_tokens_on_grid(grid)
-        own_token_count = len(own_tokens)
-        opponent_token_count = len(opponent_tokens)
-        return own_token_count - opponent_token_count
+        self.wait_a_second(game, initial_token_coord)
+
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board,
+                                  False)
+        return new_grid
+
+
+class MinimaxAlphaBeta(AI):
+
+    def play(self, ai_movable_token_table, game, grid):
+        initial_token_coord, final_token_coord = self.alpha_beta_search(grid, game)
+        self.wait_a_second(game, initial_token_coord)
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board,
+                                  False)
+        return new_grid
+
+    def alpha_beta_search(self, grid, game, alpha=-1, beta=1):
+        ai_current_action = {}
+        v = self.max_value(grid, game, alpha, beta, 0, ai_current_action)
+        return ai_current_action[v]
+
+    def max_value(self, grid, game, alpha, beta, depth, ai_current_action):
+        print(("\nin max_value body, called ", depth, " levels, current state:\n ", 'AI_state', '\n'))
+
+        self.total_node_generated += 1
+
+        if depth >= self.depth_of_game_tree:
+            self.depth_of_game_tree = depth
+
+        current_alpha = alpha
+        current_beta = beta
+
+        # if self.depth_of_game_tree >= 3:
+        #     is_cutoff = True
+        #     return evaluate_current_state(AI_state)
+        if self.terminal_test(grid):
+            print("return since max_value terminated ")
+            return self.utility(grid)
+
+        ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
+        current_v = float('-inf')
+        for start_grid_coord in list(ai_movable_token_table.keys()):
+            for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
+                print(("in max_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
+
+                current_AI_state = copy.deepcopy(grid)
+                result_grid = game.make_move(self.token_color, current_AI_state, start_grid_coord, end_grid_coord,
+                                             self.board)
+
+                v = self.min_value(result_grid, game, current_alpha, current_beta, depth + 1, ai_current_action)
+                if v > current_v:
+                    current_v = v
+                    if depth == 0:
+                        ai_current_action[current_v] = (start_grid_coord, end_grid_coord)
+
+                    if current_v >= beta:
+                        self.pruning_in_max_value += 1
+                        print(("return since max_value pruning: ", current_v))
+                        return current_v
+                    current_alpha = max(alpha, current_v)
+        print(("return since all level done in max_value: ", current_v))
+        return current_v
+
+    def min_value(self, grid, game, alpha, beta, depth, ai_current_action):
+        print(("in min_value body, called ", depth, " level, current state:\n\n ", 'AI_state', '\n\n'))
+
+        self.total_node_generated += 1
+
+        if depth > self.depth_of_game_tree:
+            self.depth_of_game_tree = depth
+
+        current_alpha = alpha
+        current_beta = beta
+
+        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+            # if depth_of_game_tree >= 500:
+            self.is_cutoff = True
+            return self.evaluate_current_state(grid)
+        if self.terminal_test(grid):
+            print("return since terminated")
+            return self.utility(grid)
+        if self.token_color == config.WHITE:
+            human_token = config.BLACK
+        else:
+            human_token = config.WHITE
+
+        ai_movable_token_table = self.check_movable_token_table(human_token, grid, game)
+
+        current_v = float('inf')
+        for start_grid_coord in list(ai_movable_token_table.keys()):
+            for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
+                print(("in min_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
+
+                current_human_state = copy.deepcopy(grid)
+
+                new_grid = game.make_move(human_token, current_human_state, start_grid_coord, end_grid_coord,
+                                          self.board)
+
+                v = self.max_value(new_grid, game, current_alpha, current_beta, depth + 1, ai_current_action)
+                if v < current_v:
+
+                    current_v = v
+
+                    if current_v <= alpha:
+                        self.pruning_in_min_value += 1
+                        print(("return since min_value pruning: ", current_v))
+                        return current_v
+                    current_beta = min(beta, current_v)
+
+        print(("return since all level done in min_value: ", current_v))
+        return current_v
+
+    def utility(self, grid):
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        if ai_token_remain == 0:
+            print("AI left nothing\n")
+            return -1
+        elif human_token_remain == 0:
+            print("human left nothing")
+            return 1
+
+    def evaluate_current_state(self, grid):
+        print("when evalation function called, AI_state cutoff\n")
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        # special grid coordinates that have position advantage --> only for 5 x 5 TODO
+        # for (column, row) in [(1, 1), (1, 3), (3, 1), (3, 3)]:
+        #     if grid[column][row]['token_color'] == self.token_color:
+        #         ai_token_remain += 0.5
+        #     elif grid[column][row]['token_color'] is not config.EMPTY:
+        #         human_token_remain -= 0.5
+
+        return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
+        pass
+
+    def terminal_test(self, grid):
+        print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
+
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
+
+        if ai_token_remain == 0 or human_token_remain == 0:
+            return True
+        else:
+            return False

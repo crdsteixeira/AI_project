@@ -14,13 +14,8 @@ Functions:
 
 """
 
-
 from numpy import size
-import pygame
-import sys
 from pygame.locals import *
-# from main import *
-# from Player import *
 from copy import deepcopy
 
 import config
@@ -438,7 +433,7 @@ class Board:
             for displacement in [(-1, 0), (0, -1), (-1, -1)]:
                 grid[8][4]['displacements'].append(displacement)
 
-        print(grid)
+        #print(grid)
         return grid
 
     def get_movable_token_information(self, token_color, grid, is_prompt_bi_direct_capture=True):
@@ -496,12 +491,12 @@ class Board:
 
         if has_capture:
             result_table = self.clean_table(capture_move_table)
-            print(('get from movable token information\ncapture table  ', result_table, '\n'))
+            #print(('get from movable token information\ncapture table  ', result_table, '\n'))
             return result_table
 
         else:
             result_table = self.clean_table(paika_move_table)
-            print(('get from movable token information\npaika table  ', result_table, '\n'))
+            #print(('get from movable token information\npaika table  ', result_table, '\n'))
             return result_table
 
     def is_within_grid(self, x, y):

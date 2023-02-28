@@ -6,6 +6,7 @@ from Board import Board
 from Player import Human, AI
 from Game import Game
 import config
+import stats
 
 # Initialize pygame and the main clock
 pygame.init()
@@ -24,35 +25,31 @@ game = Game(WINDOW_SURF, main_clock, BIG_FONT)
 options = []
 while len(options) < 4:
     options = game.draw_initial_screen()
-    print(options)
 
 # Draw Board
-game_mode = options['mode']
-algorithm = options['algorithm']
+chosen_player_1 = options['player_1']
+chosen_player_2 = options['player_2']
 board_size = [int(n) for n in options['size'].split() if n != 'X']
 difficulty = options['difficulty']
-tokens = options['token']
-
-print(tokens)
-print(board_size)
 
 board = Board(board_size[0], board_size[1])
 grid = board.get_new_grid()
 
-if game_mode == "Computer vs Human":
-    player_1 = Human(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
-    player_2 = AI(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
-    player_2.initialize_ai_player()
-elif game_mode == "Human vs Human":
-    player_1 = Human(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
-    player_2 = Human(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
-elif game_mode == "Computer vs Computer":
-    player_1 = AI(config.WHITE if tokens == 'White' else config.BLACK, board, difficulty, algorithm)
+# send info to export file ###############################################
+#stats.export_results(options)
+
+if chosen_player_1 == "Human":
+    player_1 = Human(config.WHITE, board, difficulty)
+else: 
+    player_1 = AI(config.WHITE, board, difficulty, chosen_player_1)
     player_1.initialize_ai_player()
-    player_2 = AI(config.BLACK if tokens == 'White' else config.WHITE, board, difficulty, algorithm)
+
+if chosen_player_2 == "Human":
+    player_2 = Human(config.BLACK, board, difficulty)
+else: 
+    player_2 = AI(config.BLACK, board, difficulty, chosen_player_2)
     player_2.initialize_ai_player()
-else:
-    sys.exit(0)
+
 
 turn = config.WHITE
 while True:
@@ -62,3 +59,7 @@ while True:
     elif player_2.token_color == turn:
         grid = player_2.make_turn(grid, game)
     turn = config.WHITE if turn == config.BLACK else config.BLACK
+
+
+    print(pygame.time.get_ticks()) # this does lap of time when ever someone makes a move
+    

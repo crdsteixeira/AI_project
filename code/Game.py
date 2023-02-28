@@ -15,7 +15,7 @@ Functions:
 - draw_circle
 - translate_grid_to_pixel_coord
 - get_grid_clicked
-- mave_move: TODO bidirect when its AI turn
+- mave_move
 - show_game_results: TODO
 - check for draw: TODO
 '''
@@ -28,13 +28,10 @@ import config
 class Game:
     def __init__(self, WINDOW_SURF, main_clock, FONT):
         self.titles = {
-            'mode': {'Which game mode do you want to chose?': ["Human vs Human", "Computer vs Human",
-                                                               "Computer vs Computer"]},
-            'algorithm':{'Which AI algorithm do you want to play with?': ['Minimax_AlphaBeta', 'Monte_Carlo_TS']},
+            'player_1': {'Choose player 1': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
+            'player_2': {'Choose player 2': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
             'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "9 X 5"]},
-            'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]},
-            'token': {'White always goes first. Do you want to be white or black?': ["White", "Black"]},
-
+            'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]}
         }
         self.WINDOW_SURF = WINDOW_SURF
         self.main_clock = main_clock
@@ -44,7 +41,6 @@ class Game:
         self.button_x = config.WINDOW_WIDTH - self.button_width - 10
         self.button_y = config.WINDOW_HEIGHT - self.button_height - 10
         self.selected_options = {}
-
 
 
     def draw_option(self, key, title, options, y):
@@ -295,12 +291,102 @@ class Game:
                         grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] != config.EMPTY:
                     grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] = config.EMPTY
 
-        print(("Make move from ", (click_x, click_y), ' to ', (move_x, move_y)))
-        print(('\n', '\n', '\n'))
+        #print(("Make move from ", (click_x, click_y), ' to ', (move_x, move_y)))
+        #print(('\n', '\n', '\n'))
         return grid
+
+
+    def check_for_draw(self):
+        pass
+
+    # def check_for_draw(AI_state, turn):
+    #     """check for draw in 3X3 grid by whether the state matches certain patterns
+    #     """
+    #     AI_token_remain_grid_coord = []
+    #     human_token_remain_grid_coord = []
+    #     AI_token_non_central_displacement = ()
+    #     human_token_non_central_displacement = ()
+
+    #     for column in range(GRID_WIDTH):
+    #         for row in range(GRID_HEIGHT):
+    #             if AI_state[column][row]['token_color'] == AI_token:
+    #                 AI_token_remain_grid_coord.append((column, row))
+    #             if AI_state[column][row]['token_color'] == human_token:
+    #                 human_token_remain_grid_coord.append((column, row))
+
+    #     # pattern 1
+    #     if turn == 'AI' and AI_state[1][1]['token_color'] == AI_token and \
+    #         len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
+    #         for (column, row) in AI_token_remain_grid_coord:
+    #             if column != 1 and row != 1:
+    #                 AI_token_non_central_displacement = (column - 1, row - 1)
+    #         for (column, row) in human_token_remain_grid_coord:
+    #             human_token_non_central_displacement = (1 - column, 1 - row)
+
+    #         if AI_token_non_central_displacement == human_token_non_central_displacement:
+    #             show_game_results('', '', True)
+
+
+    #     # pattern 2
+    #     if turn == 'Human' and AI_state[1][1]['token_color'] == human_token and \
+    #         len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
+    #         for (column, row) in human_token_remain_grid_coord:
+    #             if column != 1 and row != 1:
+    #                 human_token_non_central_displacement = (column - 1, row - 1)
+    #         for (column, row) in AI_token_remain_grid_coord:
+    #             AI_token_non_central_displacement = (1 - column, 1 - row)
+
+    #         if AI_token_non_central_displacement == human_token_non_central_displacement:
+    #             show_game_results('', '', True)
+                
+
 
     def show_game_results(self):
         pass
 
-    def check_for_draw(self):
-        pass
+    # def show_game_results(winner_str, loser_str, draw=False):
+    #     global total_node_generated
+    #     global depth_of_game_tree
+    #     print "\n\nfinally,  level is, nodes are ", depth_of_game_tree, '\n\n', total_node_generated
+    #     if draw:
+    #         text_surf = BIG_FONT.render('The game is draw', True, BLACK)
+    #         text_rect = text_surf.get_rect()
+    #         text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+
+    #         while True:
+    #             for event in pygame.event.get():
+    #                 if event.type == QUIT:
+    #                     pygame.quit()
+    #                     sys.exit()
+
+    #             WINDOW_SURF.blit(text_surf, text_rect)
+    #             main_clock.tick(FPS)
+    #             pygame.display.update()
+
+    #     else:
+    #         text_surf = BIG_FONT.render('The game is over', True, BLACK)
+    #         text_rect = text_surf.get_rect()
+    #         text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+
+    #         winner_surf = BIG_FONT.render(winner_str + '  Win~!', True, BLACK)
+    #         winner_rect = winner_surf.get_rect()
+    #         winner_rect.center = (int(WINDOW_WIDTH*0.25), int(WINDOW_HEIGHT*0.9375))
+        
+    #         loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, BLACK)
+    #         loser_rect = loser_surf.get_rect()
+    #         loser_rect.center = (int(WINDOW_WIDTH*0.75), int(WINDOW_HEIGHT*0.9375))
+
+    #         while True:
+    #             for event in pygame.event.get():
+    #                 if event.type == QUIT:
+    #                     pygame.quit()
+    #                     sys.exit()
+
+    #             WINDOW_SURF.blit(text_surf, text_rect)
+    #             WINDOW_SURF.blit(winner_surf, winner_rect)
+    #             WINDOW_SURF.blit(loser_surf, loser_rect)
+    #             show_statistics()
+    #             main_clock.tick(FPS)
+    #             pygame.display.update()
+
+        

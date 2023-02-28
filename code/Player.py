@@ -151,6 +151,89 @@ class AI(Player):
     def make_turn(self, grid, game):
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
         return self.ai_player.play(ai_movable_token_table, game, grid)
+    
+    
+    def evaluate_current_state(self, grid):
+    # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+    #    NUMBER OF PIECES
+    #    WEAK/STRONG INTERSECTION POINTS
+    # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        print("when evalation function called, AI_state cutoff\n")
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        # special grid coordinates that have position advantage - Strong intersections
+        # for all sizes
+        for (column, row) in [(1, 1)]:
+            if grid[column][row]['token_color'] == self.token_color:
+                ai_token_remain += 0.5
+            elif grid[column][row]['token_color'] is not config.EMPTY:
+                human_token_remain -= 0.5
+                
+        # for 5x5 and 9x5
+        if self.board.GRID_COLS >= 5:
+            for (column, row) in [(1, 3), (3, 1), (3, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        # for 9x5
+        if self.board.GRID_COLS == 9:
+            for (column, row) in [(5, 1), (5, 3), (7, 1), (7, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
+        pass
+
+    def terminal_test(self, grid):
+        print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
+
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
+
+        if ai_token_remain == 0 or human_token_remain == 0:
+            return True
+        else:
+            return False
+
+
+    def utility(self, grid):
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        if ai_token_remain == 0:
+            print("AI left nothing\n")
+            return -1
+        elif human_token_remain == 0:
+            print("human left nothing")
+            return 1
 
 
 class Random(AI):
@@ -234,7 +317,6 @@ class MinimaxAlphaBeta(AI):
         current_beta = beta
 
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
-            # if depth_of_game_tree >= 500:
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
         
@@ -273,85 +355,96 @@ class MinimaxAlphaBeta(AI):
         return current_v
 
 
-    def evaluate_current_state(self, grid):
-    # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
-    #    NUMBER OF PIECES
-    #    WEAK/STRONG INTERSECTION POINTS
-    # and returns a % value of + or - . The more + the higher the chance of winning for AI
-        print("when evalation function called, AI_state cutoff\n")
-        ai_token_remain = 0
-        human_token_remain = 0
+class Minimax(AI):
 
-        for column in range(self.board.GRID_COLS):
-            for row in range(self.board.GRID_ROWS):
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 1
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain += 1
+    def play(self, ai_movable_token_table, game, grid):
+        initial_token_coord, final_token_coord = self.minimax_search(grid, game)
+        self.wait_a_second(game, initial_token_coord)
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board,
+                                  False)
+        return new_grid
 
-        # special grid coordinates that have position advantage - Strong intersections
-        # for all sizes
-        for (column, row) in [(1, 1)]:
-            if grid[column][row]['token_color'] == self.token_color:
-                ai_token_remain += 0.5
-            elif grid[column][row]['token_color'] is not config.EMPTY:
-                human_token_remain -= 0.5
-                
-        # for 5x5 and 9x5
-        if self.board.GRID_COLS >= 5:
-            for (column, row) in [(1, 3), (3, 1), (3, 3)]:
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 0.5
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain -= 0.5
+    def minimax_search(self, grid, game, alpha=-1, beta=1):
+        ai_current_action = {}
+        v = self.max_value(grid, game, 0, ai_current_action)
+        return ai_current_action[v]
 
-        # for 9x5
-        if self.board.GRID_COLS == 9:
-            for (column, row) in [(5, 1), (5, 3), (7, 1), (7, 3)]:
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 0.5
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain -= 0.5
+    def max_value(self, grid, game, depth, ai_current_action):
+        print(("\nin max_value body, called ", depth, " levels, current state:\n ", 'AI_state', '\n'))
 
-        return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
-        pass
+        self.total_node_generated += 1
 
-    def terminal_test(self, grid):
-        print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
+        if depth >= self.depth_of_game_tree:
+            self.depth_of_game_tree = depth
 
-        ai_token_remain = 0
-        human_token_remain = 0
+        current_v = float('-inf')
 
-        for column in range(self.board.GRID_COLS):
-            for row in range(self.board.GRID_ROWS):
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 1
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain += 1
+        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+            self.is_cutoff = True
+            return self.evaluate_current_state(grid)
+        
+        if self.terminal_test(grid):
+            print("return since max_value terminated ")
+            return self.utility(grid)
 
-        print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
+        ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
+        for start_grid_coord in list(ai_movable_token_table.keys()):
+            for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
+                print(("in max_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
 
-        if ai_token_remain == 0 or human_token_remain == 0:
-            return True
+                current_AI_state = copy.deepcopy(grid)
+                result_grid = game.make_move(self.token_color, current_AI_state, start_grid_coord, end_grid_coord,
+                                             self.board)
+
+                v = self.min_value(result_grid, game, depth + 1, ai_current_action)
+                if v > current_v:
+                    current_v = v
+                    if depth == 0:
+                        ai_current_action[current_v] = (start_grid_coord, end_grid_coord)
+
+
+        print(("return since all level done in max_value: ", current_v))
+        return current_v
+
+    def min_value(self, grid, game, depth, ai_current_action):
+        print(("in min_value body, called ", depth, " level, current state:\n\n ", 'AI_state', '\n\n'))
+
+        self.total_node_generated += 1
+
+        if depth > self.depth_of_game_tree:
+            self.depth_of_game_tree = depth
+
+
+        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+            self.is_cutoff = True
+            return self.evaluate_current_state(grid)
+        
+        if self.terminal_test(grid):
+            print("return since terminated")
+            return self.utility(grid)
+        
+        if self.token_color == config.WHITE:
+            human_token = config.BLACK
         else:
-            return False
+            human_token = config.WHITE
 
+        ai_movable_token_table = self.check_movable_token_table(human_token, grid, game)
 
-    def utility(self, grid):
-        ai_token_remain = 0
-        human_token_remain = 0
+        current_v = float('inf')
+        for start_grid_coord in list(ai_movable_token_table.keys()):
+            for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
+                print(("in min_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
 
-        for column in range(self.board.GRID_COLS):
-            for row in range(self.board.GRID_ROWS):
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 1
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain += 1
+                current_human_state = copy.deepcopy(grid)
 
-        if ai_token_remain == 0:
-            print("AI left nothing\n")
-            return -1
-        elif human_token_remain == 0:
-            print("human left nothing")
-            return 1
+                new_grid = game.make_move(human_token, current_human_state, start_grid_coord, end_grid_coord,
+                                          self.board)
+
+                v = self.max_value(new_grid, game, depth + 1, ai_current_action)
+                if v < current_v:
+                    current_v = v
+
+        print(("return since all level done in min_value: ", current_v))
+        return current_v
+
         

@@ -131,8 +131,6 @@ class AI(Player):
     def __init__(self, token_color, board, difficulty, algorithm):
         super().__init__(token_color, board, difficulty, algorithm)
         self.total_node_generated = 0
-        self.pruning_in_max_value = 0
-        self.pruning_in_min_value = 0
         self.depth_of_game_tree = 0
         self.is_cutoff = False
 
@@ -151,13 +149,12 @@ class AI(Player):
     def make_turn(self, grid, game):
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
         return self.ai_player.play(ai_movable_token_table, game, grid)
-    
-    
+
     def evaluate_current_state(self, grid):
-    # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
-    #    NUMBER OF PIECES
-    #    WEAK/STRONG INTERSECTION POINTS
-    # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+        #    NUMBER OF PIECES
+        #    WEAK/STRONG INTERSECTION POINTS
+        # and returns a % value of + or - . The more + the higher the chance of winning for AI
         print("when evalation function called, AI_state cutoff\n")
         ai_token_remain = 0
         human_token_remain = 0
@@ -176,7 +173,7 @@ class AI(Player):
                 ai_token_remain += 0.5
             elif grid[column][row]['token_color'] is not config.EMPTY:
                 human_token_remain -= 0.5
-                
+
         # for 5x5 and 9x5
         if self.board.GRID_COLS >= 5:
             for (column, row) in [(1, 3), (3, 1), (3, 3)]:
@@ -216,7 +213,6 @@ class AI(Player):
         else:
             return False
 
-
     def utility(self, grid):
         ai_token_remain = 0
         human_token_remain = 0
@@ -250,6 +246,11 @@ class Random(AI):
 
 class MinimaxAlphaBeta(AI):
 
+    def __init__(self, token_color, board, difficulty, algorithm):
+        super().__init__(token_color, board, difficulty, algorithm)
+        self.pruning_in_max_value = 0
+        self.pruning_in_min_value = 0
+
     def play(self, ai_movable_token_table, game, grid):
         initial_token_coord, final_token_coord = self.alpha_beta_search(grid, game)
         self.wait_a_second(game, initial_token_coord)
@@ -276,7 +277,7 @@ class MinimaxAlphaBeta(AI):
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
-        
+
         if self.terminal_test(grid):
             print("return since max_value terminated ")
             return self.utility(grid)
@@ -319,7 +320,7 @@ class MinimaxAlphaBeta(AI):
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
-        
+
         if self.terminal_test(grid):
             print("return since terminated")
             return self.utility(grid)
@@ -382,7 +383,7 @@ class Minimax(AI):
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
-        
+
         if self.terminal_test(grid):
             print("return since max_value terminated ")
             return self.utility(grid)
@@ -402,7 +403,6 @@ class Minimax(AI):
                     if depth == 0:
                         ai_current_action[current_v] = (start_grid_coord, end_grid_coord)
 
-
         print(("return since all level done in max_value: ", current_v))
         return current_v
 
@@ -414,15 +414,14 @@ class Minimax(AI):
         if depth > self.depth_of_game_tree:
             self.depth_of_game_tree = depth
 
-
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
-        
+
         if self.terminal_test(grid):
             print("return since terminated")
             return self.utility(grid)
-        
+
         if self.token_color == config.WHITE:
             human_token = config.BLACK
         else:
@@ -446,5 +445,3 @@ class Minimax(AI):
 
         print(("return since all level done in min_value: ", current_v))
         return current_v
-
-        

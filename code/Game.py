@@ -1,5 +1,4 @@
-''''
-
+'''
 AI - MECD - FEUP
 February 2023
 Rojan Aslani, Catia Teixeira

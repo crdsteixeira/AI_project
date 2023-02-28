@@ -1,5 +1,4 @@
-''''
-
+'''
 AI - MECD - FEUP
 February 2023
 Rojan Aslani, Catia Teixeira
@@ -10,7 +9,9 @@ Functions:
 
 - make_turn: Human
 - make_turn: AI
-- is_within_grid: TODO
+- is_within_grid: TODO -- XX its in Board.py
+
+# MINIMAX:
 - max_value
 - min_value
 - alpha_beta_search
@@ -19,6 +20,7 @@ Functions:
 - evaluate_current_state
 
 '''
+
 import copy
 
 from pygame.locals import *
@@ -188,9 +190,10 @@ class MinimaxAlphaBeta(AI):
         current_alpha = alpha
         current_beta = beta
 
-        # if self.depth_of_game_tree >= 3:
-        #     is_cutoff = True
-        #     return evaluate_current_state(AI_state)
+        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+            self.is_cutoff = True
+            return self.evaluate_current_state(grid)
+        
         if self.terminal_test(grid):
             print("return since max_value terminated ")
             return self.utility(grid)
@@ -234,6 +237,7 @@ class MinimaxAlphaBeta(AI):
             # if depth_of_game_tree >= 500:
             self.is_cutoff = True
             return self.evaluate_current_state(grid)
+        
         if self.terminal_test(grid):
             print("return since terminated")
             return self.utility(grid)
@@ -268,25 +272,12 @@ class MinimaxAlphaBeta(AI):
         print(("return since all level done in min_value: ", current_v))
         return current_v
 
-    def utility(self, grid):
-        ai_token_remain = 0
-        human_token_remain = 0
-
-        for column in range(self.board.GRID_COLS):
-            for row in range(self.board.GRID_ROWS):
-                if grid[column][row]['token_color'] == self.token_color:
-                    ai_token_remain += 1
-                elif grid[column][row]['token_color'] is not config.EMPTY:
-                    human_token_remain += 1
-
-        if ai_token_remain == 0:
-            print("AI left nothing\n")
-            return -1
-        elif human_token_remain == 0:
-            print("human left nothing")
-            return 1
 
     def evaluate_current_state(self, grid):
+    # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+    #    NUMBER OF PIECES
+    #    WEAK/STRONG INTERSECTION POINTS
+    # and returns a % value of + or - . The more + the higher the chance of winning for AI
         print("when evalation function called, AI_state cutoff\n")
         ai_token_remain = 0
         human_token_remain = 0
@@ -298,12 +289,29 @@ class MinimaxAlphaBeta(AI):
                 elif grid[column][row]['token_color'] is not config.EMPTY:
                     human_token_remain += 1
 
-        # special grid coordinates that have position advantage --> only for 5 x 5 TODO
-        # for (column, row) in [(1, 1), (1, 3), (3, 1), (3, 3)]:
-        #     if grid[column][row]['token_color'] == self.token_color:
-        #         ai_token_remain += 0.5
-        #     elif grid[column][row]['token_color'] is not config.EMPTY:
-        #         human_token_remain -= 0.5
+        # special grid coordinates that have position advantage - Strong intersections
+        # for all sizes
+        for (column, row) in [(1, 1)]:
+            if grid[column][row]['token_color'] == self.token_color:
+                ai_token_remain += 0.5
+            elif grid[column][row]['token_color'] is not config.EMPTY:
+                human_token_remain -= 0.5
+                
+        # for 5x5 and 9x5
+        if self.board.GRID_COLS >= 5:
+            for (column, row) in [(1, 3), (3, 1), (3, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        # for 9x5
+        if self.board.GRID_COLS == 9:
+            for (column, row) in [(5, 1), (5, 3), (7, 1), (7, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
 
         return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
         pass
@@ -327,3 +335,23 @@ class MinimaxAlphaBeta(AI):
             return True
         else:
             return False
+
+
+    def utility(self, grid):
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        if ai_token_remain == 0:
+            print("AI left nothing\n")
+            return -1
+        elif human_token_remain == 0:
+            print("human left nothing")
+            return 1
+        

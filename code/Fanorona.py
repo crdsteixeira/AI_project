@@ -41,11 +41,11 @@ def main():
     BIG_FONT = pygame.font.Font('freesansbold.ttf', 25)
     
     if cols == 3:
-        BG_IMAGE = pygame.image.load('../images/ThreeByThree.png')
+        BG_IMAGE = pygame.image.load('./images/ThreeByThree.png')
     if cols == 5:
-        BG_IMAGE = pygame.image.load('../images/FiveByFive.png')
+        BG_IMAGE = pygame.image.load('./images/FiveByFive.png')
     if cols == 9:
-        BG_IMAGE = pygame.image.load('../images/NineByFive.png')  
+        BG_IMAGE = pygame.image.load('./images/NineByFive.png')  
 
     BG_IMAGE = pygame.transform.smoothscale(BG_IMAGE,
         (int(WINDOW_WIDTH*0.5),int(WINDOW_HEIGHT*0.5)))
@@ -405,6 +405,11 @@ def show_statistics():
 
 
 def evaluate_current_state(AI_state):
+    # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+    #    NUMBER OF PIECES
+    #    WEAK/STRONG INTERSECTION POINTS
+    # and returns a % value of + or - . The more + the higher the chance of winning for AI
+
     print("when evalation function called, AI_state cutoff\n")
     AI_token_remain = 0
     human_token_remain = 0
@@ -416,8 +421,8 @@ def evaluate_current_state(AI_state):
             if AI_state[column][row]['token_color'] == human_token:
                 human_token_remain += 1
 
-    # special grid coordinates that have position advantage
-    for (column, row) in [(1, 1), (1, 3), (3, 1), (3, 3)]:
+    # special grid coordinates that have position advantage - Strong intersections
+    for (column, row) in [(1, 1), (1, 3), (3, 1), (3, 3), (5,1), (5,3), (7,1), (7,3)]:        
         if AI_state[column][row]['token_color'] == AI_token:
             AI_token_remain += 0.5
         if AI_state[column][row]['token_color'] == human_token:

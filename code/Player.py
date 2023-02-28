@@ -39,6 +39,7 @@ import pygame
 import sys
 import random
 import config
+import stats
 
 class Player:
     def __init__(self, token_color, board, difficulty, algorithm=None):
@@ -66,7 +67,11 @@ class Player:
     def check_movable_token_table(self, token_color, grid, game):
         movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
         if movable_token_table == {}:
-            game.show_game_results()
+            if token_color == config.WHITE:
+                #game.show_game_results(config.WHITE)
+                stats.winner_str('Player1')
+            else: stats.winner_str('Player1')
+
         game.check_for_draw()  # TODO
 
         return movable_token_table
@@ -148,23 +153,35 @@ class AI(Player):
         if self.difficulty == 'Easy':
             self.ai_player = Random(self.token_color, self.board, self.difficulty, self.algorithm)
 
-        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax':
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
             self.ai_player = Minimax(self.token_color, self.board, 3, self.algorithm)
-        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta':
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
+            self.ai_player = Minimax(self.token_color, self.board, 2, self.algorithm)
+
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 3, self.algorithm)
+
         elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
             pass
         
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax':
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
             self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta':
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
+            self.ai_player = Minimax(self.token_color, self.board, 4, self.algorithm)
+
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 5, self.algorithm)
+
         elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
             pass
 
     def make_turn(self, grid, game):
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
-        return self.ai_player.play(ai_movable_token_table, game, grid)
+        if ai_movable_token_table != {}:
+            return self.ai_player.play(ai_movable_token_table, game, grid)
+        else:
+            return False 
+        
 
     def evaluate_current_state(self, grid):
         # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
@@ -269,7 +286,7 @@ class Minimax(AI):
                                   False)
         return new_grid
 
-    def minimax_search(self, grid, game, alpha=-1, beta=1):
+    def minimax_search(self, grid, game):
         ai_current_action = {}
         v = self.max_value(grid, game, 0, ai_current_action)
         return ai_current_action[v]

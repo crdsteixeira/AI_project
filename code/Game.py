@@ -28,8 +28,8 @@ import config
 class Game:
     def __init__(self, WINDOW_SURF, main_clock, FONT):
         self.titles = {
-            'player_1': {'Choose player 1': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
-            'player_2': {'Choose player 2': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
+            'player_1': {'Choose player 1 (White tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
+            'player_2': {'Choose player 2 (Black tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
             'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "9 X 5"]},
             'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]}
         }
@@ -299,7 +299,7 @@ class Game:
     def check_for_draw(self):
         pass
 
-    # def check_for_draw(AI_state, turn):
+    # def check_for_draw(self, AI_state, turn):
     #     """check for draw in 3X3 grid by whether the state matches certain patterns
     #     """
     #     AI_token_remain_grid_coord = []
@@ -307,8 +307,8 @@ class Game:
     #     AI_token_non_central_displacement = ()
     #     human_token_non_central_displacement = ()
 
-    #     for column in range(GRID_WIDTH):
-    #         for row in range(GRID_HEIGHT):
+    #     for column in range(self.board.GRID_COLS):
+    #         for row in range(self.board.GRID_ROWS):
     #             if AI_state[column][row]['token_color'] == AI_token:
     #                 AI_token_remain_grid_coord.append((column, row))
     #             if AI_state[column][row]['token_color'] == human_token:
@@ -341,52 +341,54 @@ class Game:
                 
 
 
-    def show_game_results(self):
-        pass
+    # def show_game_results(self):
+    #     pass
 
-    # def show_game_results(winner_str, loser_str, draw=False):
+    # def show_game_results(winner_str, draw=False):
     #     global total_node_generated
     #     global depth_of_game_tree
-    #     print "\n\nfinally,  level is, nodes are ", depth_of_game_tree, '\n\n', total_node_generated
-    #     if draw:
-    #         text_surf = BIG_FONT.render('The game is draw', True, BLACK)
-    #         text_rect = text_surf.get_rect()
-    #         text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+    #     #print "\n\nfinally,  level is, nodes are ", depth_of_game_tree, '\n\n', total_node_generated
+    #     ##if draw:
+    #         # text_surf = BIG_FONT.render('The game is draw', True, BLACK)
+    #         # text_rect = text_surf.get_rect()
+    #         # text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+    #         #print("The game is a draw!")
 
-    #         while True:
-    #             for event in pygame.event.get():
-    #                 if event.type == QUIT:
-    #                     pygame.quit()
-    #                     sys.exit()
+    #         # while True:
+    #         #     for event in pygame.event.get():
+    #         #         if event.type == QUIT:
+    #         #             pygame.quit()
+    #         #             sys.exit()
 
-    #             WINDOW_SURF.blit(text_surf, text_rect)
-    #             main_clock.tick(FPS)
-    #             pygame.display.update()
+    #         #     WINDOW_SURF.blit(text_surf, text_rect)
+    #         #     main_clock.tick(FPS)
+    #         #     pygame.display.update()
 
-    #     else:
-    #         text_surf = BIG_FONT.render('The game is over', True, BLACK)
-    #         text_rect = text_surf.get_rect()
-    #         text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+    #     ##else:
+    #         # text_surf = BIG_FONT.render('The game is over', True, BLACK)
+    #         # text_rect = text_surf.get_rect()
+    #         # text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
 
-    #         winner_surf = BIG_FONT.render(winner_str + '  Win~!', True, BLACK)
-    #         winner_rect = winner_surf.get_rect()
-    #         winner_rect.center = (int(WINDOW_WIDTH*0.25), int(WINDOW_HEIGHT*0.9375))
+    #         # winner_surf = BIG_FONT.render(winner_str + '  Win~!', True, BLACK)
+    #         # winner_rect = winner_surf.get_rect()
+    #         # winner_rect.center = (int(WINDOW_WIDTH*0.25), int(WINDOW_HEIGHT*0.9375))
         
-    #         loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, BLACK)
-    #         loser_rect = loser_surf.get_rect()
-    #         loser_rect.center = (int(WINDOW_WIDTH*0.75), int(WINDOW_HEIGHT*0.9375))
+    #         # loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, BLACK)
+    #         # loser_rect = loser_surf.get_rect()
+    #         # loser_rect.center = (int(WINDOW_WIDTH*0.75), int(WINDOW_HEIGHT*0.9375))
+    #     print("Winner: ", winner_str)
 
-    #         while True:
-    #             for event in pygame.event.get():
-    #                 if event.type == QUIT:
-    #                     pygame.quit()
-    #                     sys.exit()
+    #         # while True:
+    #         #     for event in pygame.event.get():
+    #         #         if event.type == QUIT:
+    #         #             pygame.quit()
+    #         #             sys.exit()
 
-    #             WINDOW_SURF.blit(text_surf, text_rect)
-    #             WINDOW_SURF.blit(winner_surf, winner_rect)
-    #             WINDOW_SURF.blit(loser_surf, loser_rect)
-    #             show_statistics()
-    #             main_clock.tick(FPS)
-    #             pygame.display.update()
+    #         #     WINDOW_SURF.blit(text_surf, text_rect)
+    #         #     WINDOW_SURF.blit(winner_surf, winner_rect)
+    #         #     WINDOW_SURF.blit(loser_surf, loser_rect)
+    #         #     show_statistics()
+    #         #     main_clock.tick(FPS)
+    #         #     pygame.display.update()
 
         

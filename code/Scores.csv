@@ -1,0 +1,4 @@
+Fanorona Game - Score board,,,,,
+FEUP - MECD - AI,,,,,
+Player1,Player2,Board_Size,Difficulty,Game_Time(s),Winner
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,25.195,Player1

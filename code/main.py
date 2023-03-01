@@ -1,3 +1,26 @@
+"""
+AI - MECD - FEUP
+February 2023
+Rojan Aslani, Catia Teixeira
+
+main.py: Main control logic
+
+Functions:
+
+- draw_option
+- draw_all_options
+- draw_readytostart
+- draw_initial_screen
+- draw_grid
+- draw_circle
+- translate_grid_to_pixel_coord
+- get_grid_clicked
+- mave_move
+- show_results
+- check for draw
+"""
+
+
 import copy
 
 import pygame
@@ -63,7 +86,7 @@ else:
 
 turn = config.WHITE
 tic = pygame.time.get_ticks()  # initiate timer
-previous_states = [] #[(grid, turn)]
+previous_states = []
 
 while grid:
     game.draw_grid(grid, board)
@@ -78,6 +101,12 @@ while grid:
     if grid:
         print(grid)
         game.check_for_draw(grid, turn, previous_states, board, player_1, player_2)
+    else:
+        if turn == config.WHITE:
+            # Export results to csv file
+            stats.winner_str('Player_1')
+        else:
+            stats.winner_str('Player_2')
 
 # send info to export file 
 stats.options_prepare_row(options)

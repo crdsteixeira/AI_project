@@ -34,3 +34,14 @@ Monte_Carlo_TS,Monte_Carlo_TS,Fanoron-Tsivy(9 X 5),Hard,252.554,Player_1
 Monte_Carlo_TS,Monte_Carlo_TS,Fanoron-Dimy (5 X 5),Medium,50.05,Player_1
 Monte_Carlo_TS,Monte_Carlo_TS,Fanoron-Dimy (5 X 5),Medium,181.069,Player_1
 Human,Minimax_AlphaBeta,Fanoron-Dimy (5 X 5),Easy,115.022,Player_1
+Minimax_AlphaBeta,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Medium,24.575,Player_2
+Minimax_AlphaBeta,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,18.46,Player_1
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Easy,24.853,Player_1
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,36.044,Player_2
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,44.665,Player_2
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Easy,34.558,Player_1
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,26.371,Player_1
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,23.782,Player_1
+Human,Minimax,Fanoron-Telo (3 X 3),Hard,26.352,Player_2
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,32.411,Player_2
+Human,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Hard,21.794,Player_2

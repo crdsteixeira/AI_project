@@ -1,3 +1,13 @@
+"""
+AI - MECD - FEUP
+February 2023
+Rojan Aslani, Catia Teixeira
+
+config.py: Constants used in all modules
+
+
+"""
+
 FPS = 30
 WINDOW_WIDTH = 900
 WINDOW_HEIGHT = 900

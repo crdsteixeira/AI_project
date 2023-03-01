@@ -1,9 +1,9 @@
-'''
+"""
 AI - MECD - FEUP
 February 2023
 Rojan Aslani, Catia Teixeira
 
-Game.py:
+Game.py: Controls general functionalities of the game
 
 Functions:
 
@@ -13,12 +13,15 @@ Functions:
 - draw_initial_screen
 - draw_grid
 - draw_circle
+- draw_hint
 - translate_grid_to_pixel_coord
 - get_grid_clicked
-- mave_move
-- show_game_results: TODO -- its in main - because of the floating window I couldnt pass the floating window through a function
-- check for draw: TODO
-'''
+- make_move
+- show_results
+- hash_list_of_dicts
+- check_for_draw
+"""
+
 import pickle
 import pygame
 import sys
@@ -50,7 +53,6 @@ class Game:
         self.selected_options = {}
 
         self.EXTRA_BIG_FONT = pygame.font.Font(None, 35)
-
 
     def draw_option(self, key, title, options, y):
         # Choose game mode
@@ -194,7 +196,7 @@ class Game:
                                      config.GRAY)
 
         # create hint button
-        if self.selected_options['player_1'] == 'Human' or self.selected_options['player_2']  == 'Human':
+        if self.selected_options['player_1'] == 'Human' or self.selected_options['player_2'] == 'Human':
             hint_button_surface = pygame.Surface((self.button_width, self.button_height))
             hint_button_text = pygame.font.Font(None, 22).render("Get a hint", False, (255, 255, 255))
             self.hint_button_rect = hint_button_text.get_rect(center=(self.button_width / 2, self.button_height / 2))
@@ -357,16 +359,17 @@ class Game:
 
         # Check for draw by repetition
         if previous_states_dict.get((self.hash_list_of_dicts(grid), turn), 0) >= 3:
-            self.show_game_results('', '', True)
+            self.show_results(self.selected_options)
             return
 
         # Check for draw by the triple Ko rule
         if len(previous_states) >= 6 and previous_states_dict.get((self.hash_list_of_dicts(grid), turn),
                                                                   0) == previous_states_dict.get(
-                (hash(str(grid)), turn), -3) \
+            (hash(str(grid)), turn), -3) \
                 and previous_states_dict.get((hash(str(grid)), turn), -2) == previous_states_dict.get(
-            (self.hash_list_of_dicts(grid), turn), -4) == previous_states_dict.get((self.hash_list_of_dicts(grid), turn), -6):
-            self.show_game_results('', '', True)
+            (self.hash_list_of_dicts(grid), turn), -4) == previous_states_dict.get(
+            (self.hash_list_of_dicts(grid), turn), -6):
+            self.show_results(self.selected_options)
             return
 
         player_1_token_non_central_displacement = None
@@ -386,7 +389,7 @@ class Game:
 
             if player_1_token_non_central_displacement is not None and \
                     player_1_token_non_central_displacement == player_2_token_non_central_displacement:
-                self.show_game_results('', '', True)
+                self.show_results(self.selected_options)
                 return
 
         # Check for draw by pattern 2 (applies to 5x5 and 9x5 grids)
@@ -403,135 +406,72 @@ class Game:
 
             if player_2_token_non_central_displacement is not None and \
                     player_1_token_non_central_displacement == player_2_token_non_central_displacement:
-                self.show_game_results('', '', True)
+                self.show_results(self.selected_options)
                 return
 
-        # """Check for draw by repetition, triple Ko rule, or certain patterns in 3x3, 5x5, and 9x5 grids.
-        # """
-        # AI_token_remain_grid_coord = []
-        # human_token_remain_grid_coord = []
-        #
-        # for column in range(self.board.GRID_COLS):
-        #     for row in range(self.board.GRID_ROWS):
-        #         if AI_state[column][row]['token_color'] == AI_token:
-        #             AI_token_remain_grid_coord.append((column, row))
-        #         elif AI_state[column][row]['token_color'] == human_token:
-        #             human_token_remain_grid_coord.append((column, row))
-        #
-        # # Check for draw by repetition
-        # if previous_states.count(AI_state) >= 3:
-        #     show_game_results('', '', True)
-        #     return
-        #
-        # # Check for draw by the triple Ko rule
-        # if len(previous_states) >= 6 and previous_states[-1] == previous_states[-3] == previous_states[-5] \
-        #         and previous_states[-2] == previous_states[-4] == previous_states[-6]:
-        #     show_game_results('', '', True)
-        #     return
-        #
-        # # Check for draw by pattern 1 (applies to 3x3, 5x5, and 9x5 grids)
-        # if turn == 'AI' and AI_state[self.board.GRID_COLS // 2][self.board.GRID_ROWS // 2][
-        #     'token_color'] == AI_token \
-        #         and len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
-        #     for (column, row) in AI_token_remain_grid_coord:
-        #         if column != self.board.GRID_COLS // 2 and row != self.board.GRID_ROWS // 2:
-        #             AI_token_non_central_displacement = (
-        #                 column - self.board.GRID_COLS // 2, row - self.board.GRID_ROWS // 2)
-        #     for (column, row) in human_token_remain_grid_coord:
-        #         human_token_non_central_displacement = (
-        #             self.board.GRID_COLS // 2 - column, self.board.GRID_ROWS // 2 - row)
-        #
-        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
-        #         show_game_results('', '', True)
-        #         return
-        #
-        # # Check for draw by pattern 2 (applies to 5x5 and 9x5 grids)
-        # if self.board.GRID_COLS >= 5 and turn == 'Human' and \
-        #         AI_state[self.board.GRID_COLS // 2][self.board.GRID_ROWS // 2]['token_color'] == human_token \
-        #         and len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
-        #     for (column, row) in human_token_remain_grid_coord:
-        #         if column != self.board.GRID_COLS // 2 and row != self.board.GRID_ROWS // 2:
-        #             human_token_non_central_displacement = (
-        #                 column - self.board.GRID_COLS // 2, row - self.board.GRID_ROWS // 2)
-        #     for (column, row) in AI_token_remain_grid_coord:
-        #         AI_token_non_central_displacement = (
-        #             self.board.GRID_COLS // 2 - column, self.board.GRID_ROWS // 2 - row)
-        #
-        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
-        #         show_game_results('', '', True)
-        #         return
-
-        # AI_token_remain_grid_coord = []
-        # human_token_remain_grid_coord = []
-        # AI_token_non_central_displacement = ()
-        # human_token_non_central_displacement = ()
-        #
-        # for column in range(self.board.GRID_COLS):
-        #     for row in range(self.board.GRID_ROWS):
-        #         if AI_state[column][row]['token_color'] == AI_token:
-        #             AI_token_remain_grid_coord.append((column, row))
-        #         if AI_state[column][row]['token_color'] == human_token:
-        #             human_token_remain_grid_coord.append((column, row))
-        #
-        # # pattern 1
-        # if turn == 'AI' and AI_state[1][1]['token_color'] == AI_token and \
-        #     len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
-        #     for (column, row) in AI_token_remain_grid_coord:
-        #         if column != 1 and row != 1:
-        #             AI_token_non_central_displacement = (column - 1, row - 1)
-        #     for (column, row) in human_token_remain_grid_coord:
-        #         human_token_non_central_displacement = (1 - column, 1 - row)
-        #
-        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
-        #         show_game_results('', '', True)
-        #
-        # # pattern 2
-        # if turn == 'Human' and AI_state[1][1]['token_color'] == human_token and \
-        #     len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
-        #     for (column, row) in human_token_remain_grid_coord:
-        #         if column != 1 and row != 1:
-        #             human_token_non_central_displacement = (column - 1, row - 1)
-        #     for (column, row) in AI_token_remain_grid_coord:
-        #         AI_token_non_central_displacement = (1 - column, 1 - row)
-        #
-        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
-        #         show_game_results('', '', True)
-
-    # def show_game_results(self):
-    #     pass
-
-
     def show_results(self, options):
-        
+        # To hide Hint button
+        hint_button_surface = pygame.Surface((self.button_width, self.button_height))
+        hint_button_surface.fill((255, 255, 255))
+        self.WINDOW_SURF.blit(hint_button_surface, (self.button_hx, self.button_hy))
+
+        self.main_clock.tick(config.FPS)
+        pygame.display.update()
+        self.main_clock.tick(config.FPS)
+
+        # To show results
         text_surf = self.EXTRA_BIG_FONT.render('GAME OVER!', True, config.BLACK)
         text_rect = text_surf.get_rect()
-        text_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.150))
+        text_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.150))
 
-        # find the real loser and winner
-        winner_str = options[stats.winner.lower()]
-        if winner_str == 'player_1':
-            loser = 'player_2'
-        else: 
-            loser = 'player_1'
-            loser_str = options[loser]
+        if stats is not None:
 
-        winner_surf = self.EXTRA_BIG_FONT.render('Winner: '+ stats.winner + ' (' + winner_str + ')', True, config.GREEN)
-        winner_rect = winner_surf.get_rect()
-        winner_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.875))
+            # find the real loser and winner
+            winner_str = options[stats.winner.lower()]
+            if winner_str == 'player_1':
+                loser = 'Player_2'
+            else:
+                loser = 'Player_1'
 
-        loser_surf = self.EXTRA_BIG_FONT.render('Loser: ' + loser + ' (' + loser_str + ')', True, config.RED)
-        loser_rect = loser_surf.get_rect()
-        loser_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.9375))
+            loser_str = options[loser.lower()]
 
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+            winner_surf = self.EXTRA_BIG_FONT.render('Winner: ' + stats.winner + ' (' + winner_str + ')', True,
+                                                     config.GREEN)
+            winner_rect = winner_surf.get_rect()
+            winner_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.875))
 
-            self.WINDOW_SURF.blit(text_surf, text_rect)
-            self.WINDOW_SURF.blit(winner_surf, winner_rect)
-            self.WINDOW_SURF.blit(loser_surf, loser_rect)
+            loser_surf = self.EXTRA_BIG_FONT.render('Loser: ' + loser + ' (' + loser_str + ')', True, config.RED)
+            loser_rect = loser_surf.get_rect()
+            loser_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.9375))
 
-            self.main_clock.tick(config.FPS)
-            pygame.display.update()
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                self.WINDOW_SURF.blit(text_surf, text_rect)
+                self.WINDOW_SURF.blit(winner_surf, winner_rect)
+                self.WINDOW_SURF.blit(loser_surf, loser_rect)
+
+                self.main_clock.tick(config.FPS)
+                pygame.display.update()
+                self.main_clock.tick(config.FPS)
+
+        else:
+            draw_surf = self.EXTRA_BIG_FONT.render("It's a draw!", True, config.RED)
+            draw_rect = draw_surf.get_rect()
+            draw_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.875))
+
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+                self.WINDOW_SURF.blit(text_surf, text_rect)
+                self.WINDOW_SURF.blit(draw_surf, draw_rect)
+
+                self.main_clock.tick(config.FPS)
+                pygame.display.update()
+                self.main_clock.tick(config.FPS)

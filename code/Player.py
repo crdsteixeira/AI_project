@@ -3,7 +3,7 @@ AI - MECD - FEUP
 February 2023
 Rojan Aslani, Catia Teixeira
 
-Player.py: 
+Player.py: Controls the different types of player inside the game.
 
 Classes and functions:
 - Player
@@ -11,25 +11,38 @@ Classes and functions:
     - check_movable_token_table()
 - Human
     - make_turn()
-- AI
+- AI(Player)
     - initialize_ai_player() TODO: shouldnt this be inside __init__?
     - make_turn()
     - evaluate_current_state()
     - terminal_test()
     - utility()
-- Random
+- Random(Player)
     - play()
-- Minimax
+- Minimax(AI)
     - play()
     - minimax_search()
     - max_value()
     - min_value()
-- MinimaxAlphaBeta
+- MinimaxAlphaBeta(AI)
     - play()
     - alpha_beta_search()
     - max_value()
     - min_value()
-- MCTS TODO
+- MonteCarloTS(AI)
+    - play()
+    - mct_search
+    - run_iteration
+    - tree_policy
+- Node(AI)
+    - get_untried_actions
+    - q
+    - n
+    - expand
+    - rollout
+    - backpropagate
+    - is_fully_expanded
+    - best_child
 
 """
 
@@ -150,17 +163,6 @@ class Player:
 
     def check_movable_token_table(self, token_color, grid, game):
         movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
-
-        if movable_token_table == {}:
-            if token_color == config.WHITE:
-                # Export results to csv file
-                stats.winner_str('Player_2')
-            else:
-                stats.winner_str('Player_1')
-
-        # if game is not None:  # MCTS doesn't pass the if since game is None
-        #     game.check_for_draw()  # TODO
-
         return movable_token_table
 
 
@@ -172,7 +174,6 @@ class Human(Player):
             return True
 
     def make_turn(self, grid, game):
-
         human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
 
         if human_movable_token_table != {}:
@@ -180,9 +181,7 @@ class Human(Player):
             calc_hint = hint.give_hint(grid, game)
 
         if self.terminal_test(grid):
-            pygame.time.wait(1000)
-            pygame.quit()
-            sys.exit()
+            return None
 
         initial_token_coord = None
         final_token_coord = None

@@ -49,7 +49,8 @@ class Player:
         self.token_color = token_color
         self.board = board
         self.difficulty = difficulty
-        self.algorithm = algorithm if algorithm is not None else '_' # in case of Human, it never uses algorithm so its irrelevant to pass
+        self.algorithm = algorithm if algorithm is not None else '_'  # in case of Human, it never uses algorithm so
+        # its irrelevant to pass
         self.ai_player = None
 
     def wait_a_second(self, game, initial_token_coord):
@@ -108,10 +109,9 @@ class Player:
                     human_token_remain -= 0.5
 
         return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
-        
 
     def terminal_test(self, grid):
-        #print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
+        # print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
 
         ai_token_remain = 0
         human_token_remain = 0
@@ -123,7 +123,7 @@ class Player:
                 elif grid[column][row]['token_color'] is not config.EMPTY:
                     human_token_remain += 1
 
-        #print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
+        # print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
 
         if ai_token_remain == 0 or human_token_remain == 0:
             return True
@@ -142,10 +142,10 @@ class Player:
                     human_token_remain += 1
 
         if ai_token_remain == 0:
-            #print("AI left nothing\n")
+            # print("AI left nothing\n")
             return -1
         elif human_token_remain == 0:
-            #print("human left nothing")
+            # print("human left nothing")
             return 1
 
     def check_movable_token_table(self, token_color, grid, game):
@@ -155,7 +155,8 @@ class Player:
             if token_color == config.WHITE:
                 # Export results to csv file
                 stats.winner_str('Player_2')
-            else: stats.winner_str('Player_1')
+            else:
+                stats.winner_str('Player_1')
 
         if game is not None:
             game.check_for_draw()  # TODO
@@ -164,10 +165,17 @@ class Player:
 
 
 class Human(Player):
+
+    def check_if_hint_clicked(self, game, mouse_x, mouse_y):
+        hint_button_clicked = game.hint_button_rect.collidepoint(mouse_x - game.button_hx, mouse_y - game.button_hy)
+        if hint_button_clicked:
+            return True
     def make_turn(self, grid, game):
 
         human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
-        
+        hint = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
+        calc_hint = hint.give_hint(grid, game)
+
         if self.terminal_test(grid):
             pygame.time.wait(1000)
             pygame.quit()
@@ -175,14 +183,21 @@ class Human(Player):
 
         initial_token_coord = None
         final_token_coord = None
+        show_hint = False
         while final_token_coord is None:
+            if show_hint:
+                game.draw_hint(calc_hint)
             while initial_token_coord is None:
+                if show_hint:
+                    game.draw_hint(calc_hint)
                 for event in pygame.event.get():
                     game.main_clock.tick(config.FPS)
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         mouse_x, mouse_y = event.pos
                         initial_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
-                        if initial_token_coord not in human_movable_token_table:
+                        if self.check_if_hint_clicked(game, mouse_x, mouse_y):
+                            show_hint = True
+                        elif initial_token_coord not in human_movable_token_table:
                             initial_token_coord = None
 
                     if event.type == QUIT:
@@ -200,8 +215,6 @@ class Human(Player):
             game.main_clock.tick(config.FPS)
             pygame.display.update()
             game.main_clock.tick(config.FPS)
-
-
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -233,7 +246,6 @@ class Human(Player):
 
         new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board, True)
         return new_grid
-        
 
 
 class AI(Player):
@@ -279,7 +291,7 @@ class AI(Player):
         if ai_movable_token_table != {}:
             return self.ai_player.play(ai_movable_token_table, game, grid)
         else:
-            return False 
+            return False
 
     def evaluate_current_state_a(self, grid):
         # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
@@ -417,7 +429,6 @@ class AI(Player):
 
 class Random(AI):
     def play(self, ai_movable_token_table, game, grid):
-
         if self.terminal_test(grid):
             pygame.time.wait(1000)
             pygame.quit()
@@ -528,13 +539,17 @@ class MinimaxAlphaBeta(AI):
                                   False)
         return new_grid
 
+    def give_hint(self, grid, game):
+        initial_token_coord, final_token_coord = self.alpha_beta_search(grid, game)
+        return [initial_token_coord, final_token_coord]
+
     def alpha_beta_search(self, grid, game, alpha=-1, beta=1):
         ai_current_action = {}
         v = self.max_value(grid, game, alpha, beta, 0, ai_current_action)
         return ai_current_action[v]
 
     def max_value(self, grid, game, alpha, beta, depth, ai_current_action):
-        #print(("\nin max_value body, called ", depth, " levels, current state:\n ", 'AI_state', '\n'))
+        # print(("\nin max_value body, called ", depth, " levels, current state:\n ", 'AI_state', '\n'))
 
         self.total_node_generated += 1
 
@@ -549,14 +564,14 @@ class MinimaxAlphaBeta(AI):
             return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
-            #print("return since max_value terminated ")
+            # print("return since max_value terminated ")
             return self.utility(grid)
 
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
         current_v = float('-inf')
         for start_grid_coord in list(ai_movable_token_table.keys()):
             for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
-                #print(("in max_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
+                # print(("in max_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
 
                 current_AI_state = copy.deepcopy(grid)
                 result_grid = game.make_move(self.token_color, current_AI_state, start_grid_coord, end_grid_coord,
@@ -570,14 +585,14 @@ class MinimaxAlphaBeta(AI):
 
                     if current_v >= beta:
                         self.pruning_in_max_value += 1
-                        #print(("return since max_value pruning: ", current_v))
+                        # print(("return since max_value pruning: ", current_v))
                         return current_v
                     current_alpha = max(alpha, current_v)
-        #print(("return since all level done in max_value: ", current_v))
+        # print(("return since all level done in max_value: ", current_v))
         return current_v
 
     def min_value(self, grid, game, alpha, beta, depth, ai_current_action):
-        #print(("in min_value body, called ", depth, " level, current state:\n\n ", 'AI_state', '\n\n'))
+        # print(("in min_value body, called ", depth, " level, current state:\n\n ", 'AI_state', '\n\n'))
 
         self.total_node_generated += 1
 
@@ -592,7 +607,7 @@ class MinimaxAlphaBeta(AI):
             return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
-            #print("return since terminated")
+            # print("return since terminated")
             return self.utility(grid)
         if self.token_color == config.WHITE:
             human_token = config.BLACK
@@ -604,7 +619,7 @@ class MinimaxAlphaBeta(AI):
         current_v = float('inf')
         for start_grid_coord in list(ai_movable_token_table.keys()):
             for end_grid_coord in list(ai_movable_token_table[start_grid_coord].keys()):
-                #print(("in min_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
+                # print(("in min_value body, action is choose from ", start_grid_coord, end_grid_coord, '\n\n'))
 
                 current_human_state = copy.deepcopy(grid)
 
@@ -618,11 +633,11 @@ class MinimaxAlphaBeta(AI):
 
                     if current_v <= alpha:
                         self.pruning_in_min_value += 1
-                        #print(("return since min_value pruning: ", current_v))
+                        # print(("return since min_value pruning: ", current_v))
                         return current_v
                     current_beta = min(beta, current_v)
 
-        #print(("return since all level done in min_value: ", current_v))
+        # print(("return since all level done in min_value: ", current_v))
         return current_v
 
 
@@ -676,7 +691,7 @@ class Node(AI):
         self.parent = parent  # tuppple: (action, node object); action = [(initial coord),(final_coord)]
         self.children = []
         self.number_of_visits = 0
-        self.results = defaultdict(lambda: 0) # wins and losses for each node
+        self.results = defaultdict(lambda: 0)  # wins and losses for each node
         self.untried_actions = self.get_untried_actions(self.grid, self.token_color)
 
     def get_untried_actions(self, grid, token_color):

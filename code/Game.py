@@ -27,10 +27,13 @@ import config
 
 class Game:
     def __init__(self, WINDOW_SURF, main_clock, FONT):
+        self.hint_button_rect = None
         self.titles = {
             'player_1': {'Choose player 1 (White tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
             'player_2': {'Choose player 2 (Black tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
-            'size': {'In which board size would you like to play with?': ["Fanoron-Telo (3 X 3)", "Fanoron-Dimy (5 X 5)", "Fanoron-Tsivy(9 X 5)"]},
+            'size': {
+                'In which board size would you like to play with?': ["Fanoron-Telo (3 X 3)", "Fanoron-Dimy (5 X 5)",
+                                                                     "Fanoron-Tsivy(9 X 5)"]},
             'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]}
         }
         self.WINDOW_SURF = WINDOW_SURF
@@ -40,8 +43,9 @@ class Game:
         self.button_height = 30
         self.button_x = config.WINDOW_WIDTH - self.button_width - 10
         self.button_y = config.WINDOW_HEIGHT - self.button_height - 10
+        self.button_hx = config.WINDOW_WIDTH / 2 - self.button_width / 2
+        self.button_hy = config.WINDOW_HEIGHT - self.button_height - 100
         self.selected_options = {}
-
 
     def draw_option(self, key, title, options, y):
         # Choose game mode
@@ -65,7 +69,7 @@ class Game:
 
     def draw_all_options(self):
         y = 0.1
-        delta_y = (1 / (len(self.titles)+1))
+        delta_y = (1 / (len(self.titles) + 1))
         text_list = []
         for key, value in self.titles.items():
             for title, options in value.items():
@@ -167,7 +171,7 @@ class Game:
                     # print coords on board
                     self.draw_circle(board, center_pixel_coord, "{0}, {1}".format(column, row),
                                      grid[column][row]['token_color'])
-                    #pygame.draw.circle(
+                    # pygame.draw.circle(
                     #    self.WINDOW_SURF,
                     #    grid[column][row]['token_color'],
                     ##    center_pixel_coord,
@@ -183,6 +187,25 @@ class Game:
                     # print coords on board
                     self.draw_circle(board, center_pixel_coord, "{0}, {1}".format(column, row),
                                      config.GRAY)
+
+        # create hint button
+
+        hint_button_surface = pygame.Surface((self.button_width, self.button_height))
+        hint_button_text = pygame.font.Font(None, 22).render("Get a hint", False, (255, 255, 255))
+        self.hint_button_rect = hint_button_text.get_rect(center=(self.button_width / 2, self.button_height / 2))
+        hint_button_surface.fill((0, 128, 0))
+        hint_button_surface.blit(hint_button_text, self.hint_button_rect)
+        self.WINDOW_SURF.blit(hint_button_surface, (self.button_hx, self.button_hy))
+
+        self.main_clock.tick(config.FPS)
+        pygame.display.update()
+        self.main_clock.tick(config.FPS)
+
+    def draw_hint(self, calc_hint):
+        text = self.FONT.render(f"Move from: {calc_hint[0]} to {calc_hint[1]} ;)", True, config.BLACK)
+        rect = text.get_rect()
+        rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT - 50))
+        self.WINDOW_SURF.blit(text, rect)
 
         self.main_clock.tick(config.FPS)
         pygame.display.update()
@@ -215,6 +238,7 @@ class Game:
                     print(column, row)
                     return column, row
         return None
+
 
     def make_move(self, token_color, grid, initial_token_coords, final_token_coords, board, prompt_bi_direct=False):
         (click_x, click_y) = initial_token_coords
@@ -291,10 +315,9 @@ class Game:
                         grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] != config.EMPTY:
                     grid[click_x - 3 * delta_x][click_y - 3 * delta_y]['token_color'] = config.EMPTY
 
-        #print(("Make move from ", (click_x, click_y), ' to ', (move_x, move_y)))
-        #print(('\n', '\n', '\n'))
+        # print(("Make move from ", (click_x, click_y), ' to ', (move_x, move_y)))
+        # print(('\n', '\n', '\n'))
         return grid
-
 
     def check_for_draw(self):
         pass
@@ -326,7 +349,6 @@ class Game:
     #         if AI_token_non_central_displacement == human_token_non_central_displacement:
     #             show_game_results('', '', True)
 
-
     #     # pattern 2
     #     if turn == 'Human' and AI_state[1][1]['token_color'] == human_token and \
     #         len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
@@ -338,8 +360,6 @@ class Game:
 
     #         if AI_token_non_central_displacement == human_token_non_central_displacement:
     #             show_game_results('', '', True)
-                
-
 
     # def show_game_results(self):
     #     pass
@@ -372,7 +392,7 @@ class Game:
     #         winner_surf = BIG_FONT.render(winner_str + '  Win!', True, config.BLACK)
     #         winner_rect = winner_surf.get_rect()
     #         winner_rect.center = (int(config.WINDOW_COLS*0.25), int(config.WINDOW_ROWS*0.9375))
-        
+
     #         # loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, config.BLACK)
     #         # loser_rect = loser_surf.get_rect()
     #         # loser_rect.center = (int(config.WINDOW_COLS*0.75), int(config.WINDOW_ROWS*0.9375))
@@ -390,5 +410,3 @@ class Game:
     #         #show_statistics()
     #         self.main_clock.tick(config.FPS)
     #         pygame.display.update()
-
-        

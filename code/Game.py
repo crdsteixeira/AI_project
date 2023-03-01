@@ -16,7 +16,7 @@ Functions:
 - translate_grid_to_pixel_coord
 - get_grid_clicked
 - mave_move
-- show_game_results: TODO
+- show_game_results: TODO -- its in main - because of the floating window I couldnt pass the floating window through a function
 - check for draw: TODO
 '''
 
@@ -30,7 +30,7 @@ class Game:
         self.titles = {
             'player_1': {'Choose player 1 (White tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
             'player_2': {'Choose player 2 (Black tokens)': ["Human", "Minimax", "Minimax_AlphaBeta", "Monte_Carlo_TS"]},
-            'size': {'In which board size would you like to play with?': ["3 X 3", "5 X 5", "9 X 5"]},
+            'size': {'In which board size would you like to play with?': ["Fanoron-Telo (3 X 3)", "Fanoron-Dimy (5 X 5)", "Fanoron-Tsivy(9 X 5)"]},
             'difficulty': {'What is your difficulty level?': ["Easy", "Medium", "Hard"]}
         }
         self.WINDOW_SURF = WINDOW_SURF
@@ -344,51 +344,51 @@ class Game:
     # def show_game_results(self):
     #     pass
 
-    # def show_game_results(winner_str, draw=False):
+    # def show_game_results(self, winner_str, BIG_FONT, draw=False):
     #     global total_node_generated
     #     global depth_of_game_tree
-    #     #print "\n\nfinally,  level is, nodes are ", depth_of_game_tree, '\n\n', total_node_generated
-    #     ##if draw:
-    #         # text_surf = BIG_FONT.render('The game is draw', True, BLACK)
-    #         # text_rect = text_surf.get_rect()
-    #         # text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
-    #         #print("The game is a draw!")
+    #     print ("\n\nfinally,  level is, nodes are ", depth_of_game_tree, '\n\n', total_node_generated)
+    #     if draw:
+    #         text_surf = BIG_FONT.render('The game is draw', True, config.BLACK)
+    #         text_rect = text_surf.get_rect()
+    #         text_rect.center = (int(config.WINDOW_COLS*0.5), int(config.WINDOW_ROWS*0.875))
+    #         print("The game is a draw!")
 
-    #         # while True:
-    #         #     for event in pygame.event.get():
-    #         #         if event.type == QUIT:
-    #         #             pygame.quit()
-    #         #             sys.exit()
+    #         while True:
+    #             for event in pygame.event.get():
+    #                 if event.type == pygame.QUIT:
+    #                     pygame.quit()
+    #                     sys.exit()
 
-    #         #     WINDOW_SURF.blit(text_surf, text_rect)
-    #         #     main_clock.tick(FPS)
-    #         #     pygame.display.update()
+    #             self.WINDOW_SURF.blit(text_surf, text_rect)
+    #             self.main_clock.tick(config.FPS)
+    #             pygame.display.update()
 
-    #     ##else:
-    #         # text_surf = BIG_FONT.render('The game is over', True, BLACK)
-    #         # text_rect = text_surf.get_rect()
-    #         # text_rect.center = (int(WINDOW_WIDTH*0.5), int(WINDOW_HEIGHT*0.875))
+    #     else:
+    #         text_surf = BIG_FONT.render('The game is over', True, config.BLACK)
+    #         text_rect = text_surf.get_rect()
+    #         text_rect.center = (int(config.WINDOW_COLS*0.5), int(config.WINDOW_ROWS*0.875))
 
-    #         # winner_surf = BIG_FONT.render(winner_str + '  Win~!', True, BLACK)
-    #         # winner_rect = winner_surf.get_rect()
-    #         # winner_rect.center = (int(WINDOW_WIDTH*0.25), int(WINDOW_HEIGHT*0.9375))
+    #         winner_surf = BIG_FONT.render(winner_str + '  Win!', True, config.BLACK)
+    #         winner_rect = winner_surf.get_rect()
+    #         winner_rect.center = (int(config.WINDOW_COLS*0.25), int(config.WINDOW_ROWS*0.9375))
         
-    #         # loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, BLACK)
+    #         # loser_surf = BIG_FONT.render(loser_str + '  Lose~~', True, config.BLACK)
     #         # loser_rect = loser_surf.get_rect()
-    #         # loser_rect.center = (int(WINDOW_WIDTH*0.75), int(WINDOW_HEIGHT*0.9375))
+    #         # loser_rect.center = (int(config.WINDOW_COLS*0.75), int(config.WINDOW_ROWS*0.9375))
     #     print("Winner: ", winner_str)
 
-    #         # while True:
-    #         #     for event in pygame.event.get():
-    #         #         if event.type == QUIT:
-    #         #             pygame.quit()
-    #         #             sys.exit()
+    #     while True:
+    #         for event in pygame.event.get():
+    #             if event.type == pygame.QUIT:
+    #                 pygame.quit()
+    #                 sys.exit()
 
-    #         #     WINDOW_SURF.blit(text_surf, text_rect)
-    #         #     WINDOW_SURF.blit(winner_surf, winner_rect)
-    #         #     WINDOW_SURF.blit(loser_surf, loser_rect)
-    #         #     show_statistics()
-    #         #     main_clock.tick(FPS)
-    #         #     pygame.display.update()
+    #         self.WINDOW_SURF.blit(text_surf, text_rect)
+    #         self.WINDOW_SURF.blit(winner_surf, winner_rect)
+    #         #self.WINDOW_SURF.blit(loser_surf, loser_rect)
+    #         #show_statistics()
+    #         self.main_clock.tick(config.FPS)
+    #         pygame.display.update()
 
         

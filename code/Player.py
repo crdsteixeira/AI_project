@@ -64,125 +64,6 @@ class Player:
 
         pygame.time.wait(1000)
 
-    def check_movable_token_table(self, token_color, grid, game):
-        movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
-        if movable_token_table == {}:
-            if token_color == config.WHITE:
-                #game.show_game_results(config.WHITE)
-                stats.winner_str('Player1')
-            else: stats.winner_str('Player1')
-
-        game.check_for_draw()  # TODO
-
-        return movable_token_table
-
-
-class Human(Player):
-    def make_turn(self, grid, game):
-
-        human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
-
-        initial_token_coord = None
-        final_token_coord = None
-        while final_token_coord is None:
-            while initial_token_coord is None:
-                for event in pygame.event.get():
-                    game.main_clock.tick(config.FPS)
-                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                        mouse_x, mouse_y = event.pos
-                        initial_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
-                        if initial_token_coord not in human_movable_token_table:
-                            initial_token_coord = None
-
-                    if event.type == QUIT:
-                        pygame.quit()
-                        sys.exit()
-            # when grid got clicked, extra green circle shows it
-            pygame.draw.circle(
-                game.WINDOW_SURF,
-                config.GREEN,
-                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
-                int(self.board.GRID_SIZE * 0.5),
-                10)
-
-            game.main_clock.tick(config.FPS)
-            pygame.display.update()
-            game.main_clock.tick(config.FPS)
-
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-                if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                    mouse_x, mouse_y = event.pos
-                    final_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
-                    # to detect if the user changes the token he wants to move
-                    if final_token_coord not in human_movable_token_table[initial_token_coord]:
-                        if final_token_coord in human_movable_token_table:
-                            initial_token_coord = final_token_coord
-                            final_token_coord = None
-
-                            game.draw_grid(grid, self.board)
-                            pygame.draw.circle(
-                                game.WINDOW_SURF,
-                                config.GREEN,
-                                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
-                                int(self.board.GRID_SIZE * 0.5),
-                                10)
-
-                            game.main_clock.tick(config.FPS)
-                            pygame.display.update()
-                            game.main_clock.tick(config.FPS)
-                        else:
-                            final_token_coord = None
-
-        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board, True)
-        return new_grid
-
-
-class AI(Player):
-
-    def __init__(self, token_color, board, difficulty, algorithm):
-        super().__init__(token_color, board, difficulty, algorithm)
-        self.total_node_generated = 0
-        self.depth_of_game_tree = 0
-        self.is_cutoff = False
-
-    def initialize_ai_player(self):
-        if self.difficulty == 'Easy':
-            self.ai_player = Random(self.token_color, self.board, self.difficulty, self.algorithm)
-
-        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
-            self.ai_player = Minimax(self.token_color, self.board, 3, self.algorithm)
-        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
-            self.ai_player = Minimax(self.token_color, self.board, 2, self.algorithm)
-
-        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
-            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 3, self.algorithm)
-
-        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
-            pass
-        
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
-            self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
-            self.ai_player = Minimax(self.token_color, self.board, 4, self.algorithm)
-
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
-            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 5, self.algorithm)
-
-        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
-            pass
-
-    def make_turn(self, grid, game):
-        ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
-        if ai_movable_token_table != {}:
-            return self.ai_player.play(ai_movable_token_table, game, grid)
-        else:
-            return False 
-        
-
     def evaluate_current_state(self, grid):
         # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
         #    NUMBER OF PIECES
@@ -264,9 +145,147 @@ class AI(Player):
             #print("human left nothing")
             return 1
 
+    def check_movable_token_table(self, token_color, grid, game):
+        movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
+        if movable_token_table == {}:
+            if token_color == config.WHITE:
+                # Export results to csv file
+                stats.winner_str('Player_2')
+            else: stats.winner_str('Player_1')
+
+        game.check_for_draw()  # TODO
+
+        return movable_token_table
+
+
+class Human(Player):
+    def make_turn(self, grid, game):
+
+        human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
+        
+        if self.terminal_test(grid):
+            pygame.time.wait(1000)
+            pygame.quit()
+            sys.exit()
+
+        initial_token_coord = None
+        final_token_coord = None
+        while final_token_coord is None:
+            while initial_token_coord is None:
+                for event in pygame.event.get():
+                    game.main_clock.tick(config.FPS)
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_x, mouse_y = event.pos
+                        initial_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
+                        if initial_token_coord not in human_movable_token_table:
+                            initial_token_coord = None
+
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+            # when grid got clicked, extra green circle shows it
+            pygame.draw.circle(
+                game.WINDOW_SURF,
+                config.GREEN,
+                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
+                int(self.board.GRID_SIZE * 0.5),
+                10)
+
+            game.main_clock.tick(config.FPS)
+            pygame.display.update()
+            game.main_clock.tick(config.FPS)
+
+
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.type == MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_x, mouse_y = event.pos
+                    final_token_coord = game.get_grid_clicked((mouse_x, mouse_y), self.board)
+                    # to detect if the user changes the token he wants to move
+                    if final_token_coord not in human_movable_token_table[initial_token_coord]:
+                        if final_token_coord in human_movable_token_table:
+                            initial_token_coord = final_token_coord
+                            final_token_coord = None
+
+                            game.draw_grid(grid, self.board)
+                            pygame.draw.circle(
+                                game.WINDOW_SURF,
+                                config.GREEN,
+                                game.translate_grid_to_pixel_coord(initial_token_coord, self.board),
+                                int(self.board.GRID_SIZE * 0.5),
+                                10)
+
+                            game.main_clock.tick(config.FPS)
+                            pygame.display.update()
+                            game.main_clock.tick(config.FPS)
+                        else:
+                            final_token_coord = None
+
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board, True)
+        return new_grid
+        
+
+
+class AI(Player):
+
+    def __init__(self, token_color, board, difficulty, algorithm):
+        super().__init__(token_color, board, difficulty, algorithm)
+        self.total_node_generated = 0
+        self.depth_of_game_tree = 0
+        self.is_cutoff = False
+
+    def initialize_ai_player(self):
+        if self.difficulty == 'Easy':
+            self.ai_player = Random(self.token_color, self.board, self.difficulty, self.algorithm)
+
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
+            self.ai_player = Minimax(self.token_color, self.board, 3, self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
+            self.ai_player = Minimax(self.token_color, self.board, 2, self.algorithm)
+
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 3, self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
+
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
+            pass
+        
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
+            self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
+            self.ai_player = Minimax(self.token_color, self.board, 4, self.algorithm)
+
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 5, self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
+            self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 4, self.algorithm)
+
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
+            pass
+
+    def make_turn(self, grid, game):
+        ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
+        if ai_movable_token_table != {}:
+            return self.ai_player.play(ai_movable_token_table, game, grid)
+        else:
+            return False 
+        
+
 
 class Random(AI):
     def play(self, ai_movable_token_table, game, grid):
+
+        if self.terminal_test(grid):
+            pygame.time.wait(1000)
+            pygame.quit()
+            sys.exit()
+
         initial_token_coord = list(ai_movable_token_table.keys())[0]
         final_token_coord = list(ai_movable_token_table[initial_token_coord].keys())[0]
 

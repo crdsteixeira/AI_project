@@ -1,4 +1,25 @@
 Fanorona Game - Score board,,,,,
 FEUP - MECD - AI,,,,,
-Player1,Player2,Board_Size,Difficulty,Game_Time(s),Winner
+Player_1,Player_2,Board_Size,Difficulty,Game_Time(s),Winner
 Minimax,Minimax_AlphaBeta,3 X 3,Medium,25.195,Player1
+Human,Minimax,3 X 3,Easy,30.375,Player2
+Minimax_AlphaBeta,Minimax,3 X 3,Easy,23.089,Player1
+Minimax,Minimax,3 X 3,Easy,23.074,Player1
+Minimax_AlphaBeta,Minimax_AlphaBeta,3 X 3,Easy,23.064,Player1
+Minimax_AlphaBeta,Minimax_AlphaBeta,3 X 3,Easy,12.422,Player1
+Minimax_AlphaBeta,Minimax_AlphaBeta,3 X 3,Easy,12.413,Player1
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.594,Player2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.577,Player2
+Minimax,Minimax,3 X 3,Medium,13.563,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.599,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.579,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.592,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.578,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Medium,13.594,Player_2
+Minimax,Minimax_AlphaBeta,3 X 3,Hard,10.215,Player_1
+Minimax_AlphaBeta,Minimax,3 X 3,Hard,10.213,Player_1
+Minimax_AlphaBeta,Minimax,3 X 3,Hard,10.201,Player_1
+Minimax_AlphaBeta,Minimax,3 X 3,Easy,12.446,Player_1
+Minimax,Minimax_AlphaBeta,3 X 3,Easy,12.458,Player_1
+Minimax,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Medium,25.286,Player_2
+Minimax_AlphaBeta,Minimax,Fanoron-Tsivy(9 X 5),Hard,71.313,Player_1

@@ -7,6 +7,7 @@ from Player import Human, AI
 from Game import Game
 import config
 import stats
+import re
 
 # Initialize pygame and the main clock
 pygame.init()
@@ -18,7 +19,8 @@ pygame.display.set_caption('Fanorona')
 
 # Set up the fonts
 SMALL_FONT = pygame.font.Font(None, 10)
-BIG_FONT = pygame.font.Font(None, 15)
+BIG_FONT = pygame.font.Font(None, 20)
+EXTRA_BIG_FONT = pygame.font.Font(None, 35)
 
 # Draw Initial Screen
 game = Game(WINDOW_SURF, main_clock, BIG_FONT)
@@ -29,7 +31,7 @@ while len(options) < 4:
 # Draw Board
 chosen_player_1 = options['player_1']
 chosen_player_2 = options['player_2']
-board_size = [int(n) for n in options['size'].split() if n != 'X']
+board_size = [int(s) for s in re.findall(r'-?\d+\.?\d*', options['size'])] # find only numbers from the string
 difficulty = options['difficulty']
 
 board = Board(board_size[0], board_size[1])
@@ -72,3 +74,37 @@ toc = pygame.time.get_ticks() # finalize timer
 timee = (toc-tic)/1000 # save time in seconds
 stats.duration(timee) # save time in seconds
 stats.export_results()
+
+# show screen with game_results
+
+text_surf = EXTRA_BIG_FONT.render('GAME OVER!', True, config.BLACK)
+text_rect = text_surf.get_rect()
+text_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.150))
+
+# find the real loser and winner
+winner_str = options[stats.winner.lower()]
+if winner_str == 'player_1':
+    loser = 'player_2'
+else: loser = 'player_1'
+loser_str = options[loser]
+
+winner_surf = EXTRA_BIG_FONT.render('Winner: '+ stats.winner + ' (' + winner_str + ')', True, config.GREEN)
+winner_rect = winner_surf.get_rect()
+winner_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.875))
+
+loser_surf = EXTRA_BIG_FONT.render('Loser: ' + loser + ' (' + loser_str + ')', True, config.RED)
+loser_rect = loser_surf.get_rect()
+loser_rect.center = (int(config.WINDOW_WIDTH*0.5), int(config.WINDOW_HEIGHT*0.9375))
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    WINDOW_SURF.blit(text_surf, text_rect)
+    WINDOW_SURF.blit(winner_surf, winner_rect)
+    WINDOW_SURF.blit(loser_surf, loser_rect)
+    
+    main_clock.tick(config.FPS)
+    pygame.display.update()

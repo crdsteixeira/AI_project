@@ -53,6 +53,14 @@ else:
     player_2.initialize_ai_player()
 
 
+# board = Board(9, 5)
+# grid = board.get_new_grid()
+#
+# player_1 = AI(config.WHITE, board, difficulty='Medium', algorithm='Minimax_AlphaBeta')
+# player_1.initialize_ai_player()
+# player_2 = AI(config.BLACK, board, difficulty='Medium', algorithm='Monte_Carlo_TS')
+# player_2.initialize_ai_player()
+
 turn = config.WHITE
 tic = pygame.time.get_ticks() # initiate timer
 

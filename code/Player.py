@@ -34,12 +34,15 @@ Classes and functions:
 """
 
 import copy
+from collections import defaultdict
 from pygame.locals import *
 import pygame
 import sys
 import random
 import config
 import stats
+import numpy as np
+
 
 class Player:
     def __init__(self, token_color, board, difficulty, algorithm=None):
@@ -147,13 +150,15 @@ class Player:
 
     def check_movable_token_table(self, token_color, grid, game):
         movable_token_table: dict = self.board.get_movable_token_information(token_color, grid)
+
         if movable_token_table == {}:
             if token_color == config.WHITE:
                 # Export results to csv file
                 stats.winner_str('Player_2')
             else: stats.winner_str('Player_1')
 
-        game.check_for_draw()  # TODO
+        if game is not None:
+            game.check_for_draw()  # TODO
 
         return movable_token_table
 
@@ -254,8 +259,8 @@ class AI(Player):
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
 
         elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
-            pass
-        
+            self.ai_player = MonteCarloTS(self.token_color, self.board, None, self.algorithm)
+
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
             self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
@@ -267,7 +272,7 @@ class AI(Player):
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 4, self.algorithm)
 
         elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
-            pass
+            self.ai_player = MonteCarloTS(self.token_color, self.board, None, self.algorithm)
 
     def make_turn(self, grid, game):
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
@@ -275,7 +280,139 @@ class AI(Player):
             return self.ai_player.play(ai_movable_token_table, game, grid)
         else:
             return False 
-        
+
+    def evaluate_current_state_a(self, grid):
+        # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+        #    NUMBER OF PIECES
+        #    WEAK/STRONG INTERSECTION POINTS
+        # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        # print("when evalation function called, AI_state cutoff\n")
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        # special grid coordinates that have position advantage - Strong intersections
+        # for all sizes
+        for (column, row) in [(1, 1)]:
+            if grid[column][row]['token_color'] == self.token_color:
+                ai_token_remain += 0.5
+            elif grid[column][row]['token_color'] is not config.EMPTY:
+                human_token_remain -= 0.5
+
+        # for 5x5 and 9x5
+        if self.board.GRID_COLS >= 5:
+            for (column, row) in [(1, 3), (3, 1), (3, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        # for 9x5
+        if self.board.GRID_COLS == 9:
+            for (column, row) in [(5, 1), (5, 3), (7, 1), (7, 3)]:
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        return (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
+
+    def evaluate_current_state_b(self, grid, token, bias=True):  # TODO - is we have time
+        # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+        #    NUMBER OF PIECES
+        #    WEAK/STRONG INTERSECTION POINTS
+        # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        # print("when evalation function called, AI_state cutoff\n")
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == token:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        # special grid coordinates that have position advantage - Strong intersections
+        # for all sizes
+        for (column, row) in [(1, 1)]:
+            if grid[column][row]['token_color'] == token:
+                ai_token_remain += 0.5
+            elif grid[column][row]['token_color'] is not config.EMPTY:
+                human_token_remain -= 0.5
+
+        # for 5x5 and 9x5
+        if self.board.GRID_COLS >= 5:
+            for (column, row) in [(1, 3), (3, 1), (3, 3)]:
+                if grid[column][row]['token_color'] == token:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        # for 9x5
+        if self.board.GRID_COLS == 9:
+            for (column, row) in [(5, 1), (5, 3), (7, 1), (7, 3)]:
+                if grid[column][row]['token_color'] == token:
+                    ai_token_remain += 0.5
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain -= 0.5
+
+        ai_score = (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
+        human_score = (human_token_remain - ai_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
+
+        print("Current scores: ", ai_score, human_score)
+        if bias:
+            return [ai_score, human_score]
+        if ai_token_remain == 0:
+            return [0, 1]
+        elif human_token_remain == 0:
+            return [1, 0]
+        else:
+            return [0.5, 0.5]
+
+    def terminal_test(self, grid):
+        # print(("terminal_test is called, the current state is: \n", 'AI_state', '\n'))
+
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        # print(("within terminaltest\n ", ai_token_remain, human_token_remain, '\n'))
+
+        if ai_token_remain == 0 or human_token_remain == 0:
+            return True
+        else:
+            return False
+
+    def utility(self, grid):
+        ai_token_remain = 0
+        human_token_remain = 0
+
+        for column in range(self.board.GRID_COLS):
+            for row in range(self.board.GRID_ROWS):
+                if grid[column][row]['token_color'] == self.token_color:
+                    ai_token_remain += 1
+                elif grid[column][row]['token_color'] is not config.EMPTY:
+                    human_token_remain += 1
+
+        if ai_token_remain == 0:
+            # print("AI left nothing\n")
+            return -1
+        elif human_token_remain == 0:
+            # print("human left nothing")
+            return 1
 
 
 class Random(AI):
@@ -320,7 +457,7 @@ class Minimax(AI):
 
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
-            return self.evaluate_current_state(grid)
+            return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             return self.utility(grid)
@@ -349,7 +486,7 @@ class Minimax(AI):
 
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
-            return self.evaluate_current_state(grid)
+            return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             return self.utility(grid)
@@ -409,7 +546,7 @@ class MinimaxAlphaBeta(AI):
 
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
-            return self.evaluate_current_state(grid)
+            return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             #print("return since max_value terminated ")
@@ -452,7 +589,7 @@ class MinimaxAlphaBeta(AI):
 
         if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
             self.is_cutoff = True
-            return self.evaluate_current_state(grid)
+            return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             #print("return since terminated")
@@ -488,3 +625,134 @@ class MinimaxAlphaBeta(AI):
         #print(("return since all level done in min_value: ", current_v))
         return current_v
 
+
+class MonteCarloTS(AI):
+
+    def __init__(self, token_color, board, difficulty, algorithm):
+        super().__init__(token_color, board, difficulty, algorithm)
+        self.root = None
+
+    def play(self, ai_movable_token_table, game, grid):
+        initial_token_coord, final_token_coord = self.mct_search(grid, game)
+        self.wait_a_second(game, initial_token_coord)
+        new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board,
+                                  False)
+        return new_grid
+
+    def mct_search(self, grid, game, max_rollout_depth=float('inf'), n_iterations=1000, epsilon=2):
+        self.root = Node(grid, game, self.token_color, self.board, self.difficulty, self.algorithm)
+        for _ in range(n_iterations):
+            self.run_iteration(max_rollout_depth)
+            # to select best child go for exploitation only
+        best_child = self.root.best_child(epsilon=epsilon)
+        action, node = best_child.parent
+        print(action, node.results)
+        return action
+
+    def run_iteration(self, max_rollout_depth):
+        v = self.tree_policy()
+        reward = v.rollout(max_depth=max_rollout_depth)
+        v.backpropagate(reward)
+        print("Reward: ", reward)
+
+    def tree_policy(self):
+        current_node = self.root
+        while not self.terminal_test(current_node.grid):
+            if not current_node.is_fully_expanded():
+                return current_node.expand()
+            else:
+                current_node = current_node.best_child()
+        return current_node
+
+
+class Node(AI):
+
+    def __init__(self, grid, game, token_color, board, difficulty, algorithm, parent=(None, None)):
+        super().__init__(token_color, board, difficulty, algorithm)
+        self.token = "White" if token_color == config.WHITE else "Black"
+        self.token_inv = "Black" if token_color == config.WHITE else "White"
+        self.grid = copy.deepcopy(grid)
+        self.game = game
+        self.parent = parent  # tuppple: (action, node object); action = [(initial coord),(final_coord)]
+        self.children = []
+        self.number_of_visits = 0
+        self.results = defaultdict(lambda: 0) # wins and losses for each node
+        self.untried_actions = self.get_untried_actions(self.grid, self.token_color)
+
+    def get_untried_actions(self, grid, token_color):
+        movable_dict = self.check_movable_token_table(token_color, grid, game=None)
+        keys = list(movable_dict.keys())
+        moves = []
+        for k in keys:
+            for m in movable_dict[k]:
+                moves.append([k, m])
+        return moves
+
+    def q(self):
+        wins = self.results[self.token]
+        loses = self.results[self.token_inv]
+        return wins - loses
+
+    def n(self):
+        return self.number_of_visits
+
+    def expand(self):
+        action = self.untried_actions.pop()
+        next_state = copy.deepcopy(self.grid)
+        result_grid = self.game.make_move(self.token_color, next_state, action[0], action[1], self.board)
+        new_token = config.WHITE if self.token_color == config.BLACK else config.BLACK
+        child_node = Node(result_grid, self.game, new_token, self.board, self.difficulty, self.algorithm,
+                          parent=(action, self))
+        self.children.append(child_node)
+        return child_node
+
+    def rollout(self, max_depth):
+        current_state = copy.deepcopy(self.grid)
+        current_player = self.token_color
+        depth = max_depth
+        # starts from current grid and goes through possible moves if the game simulation is not over
+        while depth and not self.terminal_test(current_state):
+            possible_moves = self.get_untried_actions(current_state, current_player)
+            scores = []
+            # for each possible move calculate the score
+            for move in possible_moves:
+                state = copy.deepcopy(current_state)
+                result_grid = self.game.make_move(current_player, state, move[0], move[1], self.board)
+                # get current score to choose next move in simulation
+                score = self.evaluate_current_state_b(result_grid, current_player)
+                scores.append(score[0])
+
+            # which next move has higher score
+            idx = np.argmax(scores)
+            max_move = possible_moves[idx]
+
+            # make the move and update grid
+            current_state = self.game.make_move(current_player, current_state, max_move[0], max_move[1], self.board)
+            # Change turn of player in simulation
+            current_player = config.WHITE if current_player == config.BLACK else config.BLACK
+            depth -= 1
+
+        # game simulation is over and calulate win and loss
+        win_loss = self.evaluate_current_state_b(current_state, current_player, bias=False)
+        win_loss_d = {}
+        current_token = "White" if current_player == config.WHITE else "Black"
+        current_token_inv = "Black" if current_player == config.WHITE else "White"
+        win_loss_d[current_token_inv] = win_loss[0]
+        win_loss_d[current_token] = win_loss[1]
+        return win_loss_d
+
+    def backpropagate(self, win_loss):
+        self.number_of_visits += 1.
+        self.results[self.token] += win_loss[self.token]  # value backed up.
+        self.results[self.token_inv] += win_loss[self.token_inv]
+        _, parent = self.parent
+        # propagates wins and losses up the tree to the root
+        if parent:
+            parent.backpropagate(win_loss)
+
+    def is_fully_expanded(self):
+        return len(self.untried_actions) == 0
+
+    def best_child(self, epsilon=2):
+        choices_weights = [(c.q() / c.n()) + epsilon * np.sqrt((2 * np.log(self.n()) / c.n())) for c in self.children]
+        return self.children[np.argmax(choices_weights)]

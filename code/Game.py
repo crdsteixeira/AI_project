@@ -19,11 +19,12 @@ Functions:
 - show_game_results: TODO -- its in main - because of the floating window I couldnt pass the floating window through a function
 - check for draw: TODO
 '''
-
+import pickle
 import pygame
 import sys
 import config
 import stats
+import hashlib
 
 
 class Game:
@@ -193,17 +194,17 @@ class Game:
                                      config.GRAY)
 
         # create hint button
+        if self.selected_options['player_1'] == 'Human' or self.selected_options['player_2']  == 'Human':
+            hint_button_surface = pygame.Surface((self.button_width, self.button_height))
+            hint_button_text = pygame.font.Font(None, 22).render("Get a hint", False, (255, 255, 255))
+            self.hint_button_rect = hint_button_text.get_rect(center=(self.button_width / 2, self.button_height / 2))
+            hint_button_surface.fill((0, 128, 0))
+            hint_button_surface.blit(hint_button_text, self.hint_button_rect)
+            self.WINDOW_SURF.blit(hint_button_surface, (self.button_hx, self.button_hy))
 
-        hint_button_surface = pygame.Surface((self.button_width, self.button_height))
-        hint_button_text = pygame.font.Font(None, 22).render("Get a hint", False, (255, 255, 255))
-        self.hint_button_rect = hint_button_text.get_rect(center=(self.button_width / 2, self.button_height / 2))
-        hint_button_surface.fill((0, 128, 0))
-        hint_button_surface.blit(hint_button_text, self.hint_button_rect)
-        self.WINDOW_SURF.blit(hint_button_surface, (self.button_hx, self.button_hy))
-
-        self.main_clock.tick(config.FPS)
-        pygame.display.update()
-        self.main_clock.tick(config.FPS)
+            self.main_clock.tick(config.FPS)
+            pygame.display.update()
+            self.main_clock.tick(config.FPS)
 
     def draw_hint(self, calc_hint):
         text = self.FONT.render(f"Move from: {calc_hint[0]} to {calc_hint[1]} ;)", True, config.BLACK)
@@ -243,7 +244,6 @@ class Game:
                     return column, row
         return None
 
-
     def make_move(self, token_color, grid, initial_token_coords, final_token_coords, board, prompt_bi_direct=False):
         (click_x, click_y) = initial_token_coords
         (move_x, move_y) = final_token_coords
@@ -255,15 +255,15 @@ class Game:
         if prompt_bi_direct and movable_token_table[(click_x, click_y)][(move_x, move_y)] == 'bi-direction':
             text_surf = self.FONT.render('Do you choose to approach or withdraw~?', True, config.BLACK)
             text_rect = text_surf.get_rect()
-            text_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.875))
+            text_rect.center = (int(config.WINDOW_WIDTH * 0.5), int(config.WINDOW_HEIGHT * 0.075))
 
             approach_surf = self.FONT.render('Approach', True, config.BLACK)
             approach_rect = approach_surf.get_rect()
-            approach_rect.center = (int(config.WINDOW_WIDTH * 0.375), int(config.WINDOW_HEIGHT * 0.9375))
+            approach_rect.center = (int(config.WINDOW_WIDTH * 0.375), int(config.WINDOW_HEIGHT * 0.1375))
 
             withdraw_surf = self.FONT.render('Withdraw', True, config.BLACK)
             withdraw_rect = withdraw_surf.get_rect()
-            withdraw_rect.center = (int(config.WINDOW_WIDTH * 0.625), int(config.WINDOW_HEIGHT * 0.9375))
+            withdraw_rect.center = (int(config.WINDOW_WIDTH * 0.625), int(config.WINDOW_HEIGHT * 0.1375))
 
             is_chosen = False
             while not is_chosen:  # prompt the Human player to choose between approach or withdraw capture
@@ -323,47 +323,179 @@ class Game:
         # print(('\n', '\n', '\n'))
         return grid
 
-    def check_for_draw(self):
-        pass
+    def show_game_results(self, a, b, c):
+        hint_button_surface = pygame.Surface((self.button_width, self.button_height))
+        hint_button_surface.fill((255, 255, 255))
+        self.WINDOW_SURF.blit(hint_button_surface, (self.button_hx, self.button_hy))
 
-    # def check_for_draw(self, AI_state, turn):
-    #     """check for draw in 3X3 grid by whether the state matches certain patterns
-    #     """
-    #     AI_token_remain_grid_coord = []
-    #     human_token_remain_grid_coord = []
-    #     AI_token_non_central_displacement = ()
-    #     human_token_non_central_displacement = ()
+        self.main_clock.tick(config.FPS)
+        pygame.display.update()
+        self.main_clock.tick(config.FPS)
 
-    #     for column in range(self.board.GRID_COLS):
-    #         for row in range(self.board.GRID_ROWS):
-    #             if AI_state[column][row]['token_color'] == AI_token:
-    #                 AI_token_remain_grid_coord.append((column, row))
-    #             if AI_state[column][row]['token_color'] == human_token:
-    #                 human_token_remain_grid_coord.append((column, row))
+        print('EMPATE')
 
-    #     # pattern 1
-    #     if turn == 'AI' and AI_state[1][1]['token_color'] == AI_token and \
-    #         len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
-    #         for (column, row) in AI_token_remain_grid_coord:
-    #             if column != 1 and row != 1:
-    #                 AI_token_non_central_displacement = (column - 1, row - 1)
-    #         for (column, row) in human_token_remain_grid_coord:
-    #             human_token_non_central_displacement = (1 - column, 1 - row)
+    def hash_list_of_dicts(self, list_of_dicts):
+        return hashlib.md5(pickle.dumps(list_of_dicts)).hexdigest()
 
-    #         if AI_token_non_central_displacement == human_token_non_central_displacement:
-    #             show_game_results('', '', True)
+    def check_for_draw(self, grid, turn, previous_states, board, player_1, player_2):
+        """Check for draw by repetition, triple Ko rule, or certain patterns in 3x3, 5x5, and 9x5 grids."""
+        player_1_token_remain_grid_coord = []
+        player_2_token_remain_grid_coord = []
 
-    #     # pattern 2
-    #     if turn == 'Human' and AI_state[1][1]['token_color'] == human_token and \
-    #         len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
-    #         for (column, row) in human_token_remain_grid_coord:
-    #             if column != 1 and row != 1:
-    #                 human_token_non_central_displacement = (column - 1, row - 1)
-    #         for (column, row) in AI_token_remain_grid_coord:
-    #             AI_token_non_central_displacement = (1 - column, 1 - row)
+        for column in range(board.GRID_COLS):
+            for row in range(board.GRID_ROWS):
+                if grid[column][row]['token_color'] == player_1.token_color:
+                    player_1_token_remain_grid_coord.append((column, row))
+                elif grid[column][row]['token_color'] == player_2.token_color:
+                    player_2_token_remain_grid_coord.append((column, row))
 
-    #         if AI_token_non_central_displacement == human_token_non_central_displacement:
-    #             show_game_results('', '', True)
+        # Convert the previous game states list to a dictionary where keys are state-player tuples and values are counts
+        previous_states_dict = {}
+        for state, player in previous_states:
+            previous_states_dict.setdefault((self.hash_list_of_dicts(state), player), 0)
+            previous_states_dict[(self.hash_list_of_dicts(state), player)] += 1
+
+        # Check for draw by repetition
+        if previous_states_dict.get((self.hash_list_of_dicts(grid), turn), 0) >= 3:
+            self.show_game_results('', '', True)
+            return
+
+        # Check for draw by the triple Ko rule
+        if len(previous_states) >= 6 and previous_states_dict.get((self.hash_list_of_dicts(grid), turn),
+                                                                  0) == previous_states_dict.get(
+                (hash(str(grid)), turn), -3) \
+                and previous_states_dict.get((hash(str(grid)), turn), -2) == previous_states_dict.get(
+            (self.hash_list_of_dicts(grid), turn), -4) == previous_states_dict.get((self.hash_list_of_dicts(grid), turn), -6):
+            self.show_game_results('', '', True)
+            return
+
+        player_1_token_non_central_displacement = None
+        player_2_token_non_central_displacement = None
+
+        # Check for draw by pattern 1 (applies to 3x3, 5x5, and 9x5 grids)
+        if turn == player_1.token_color and grid[board.GRID_COLS // 2][board.GRID_ROWS // 2][
+            'token_color'] == player_1.token_color \
+                and len(player_1_token_remain_grid_coord) == 2 and len(player_2_token_remain_grid_coord) == 1:
+            for (column, row) in player_1_token_remain_grid_coord:
+                if column != board.GRID_COLS // 2 and row != board.GRID_ROWS // 2:
+                    player_1_token_non_central_displacement = (
+                        column - board.GRID_COLS // 2, row - board.GRID_ROWS // 2)
+            for (column, row) in player_2_token_remain_grid_coord:
+                player_2_token_non_central_displacement = (
+                    board.GRID_COLS // 2 - column, board.GRID_ROWS // 2 - row)
+
+            if player_1_token_non_central_displacement is not None and \
+                    player_1_token_non_central_displacement == player_2_token_non_central_displacement:
+                self.show_game_results('', '', True)
+                return
+
+        # Check for draw by pattern 2 (applies to 5x5 and 9x5 grids)
+        if board.GRID_COLS >= 5 and turn == player_2.token_color and \
+                grid[board.GRID_COLS // 2][board.GRID_ROWS // 2]['token_color'] == player_2.token_color \
+                and len(player_1_token_remain_grid_coord) == 1 and len(player_2_token_remain_grid_coord) == 2:
+            for (column, row) in player_2_token_remain_grid_coord:
+                if column != board.GRID_COLS // 2 and row != board.GRID_ROWS // 2:
+                    player_2_token_non_central_displacement = (
+                        column - board.GRID_COLS // 2, row - board.GRID_ROWS // 2)
+            for (column, row) in player_1_token_remain_grid_coord:
+                player_1_token_non_central_displacement = (
+                    board.GRID_COLS // 2 - column, board.GRID_ROWS // 2 - row)
+
+            if player_2_token_non_central_displacement is not None and \
+                    player_1_token_non_central_displacement == player_2_token_non_central_displacement:
+                self.show_game_results('', '', True)
+                return
+
+        # """Check for draw by repetition, triple Ko rule, or certain patterns in 3x3, 5x5, and 9x5 grids.
+        # """
+        # AI_token_remain_grid_coord = []
+        # human_token_remain_grid_coord = []
+        #
+        # for column in range(self.board.GRID_COLS):
+        #     for row in range(self.board.GRID_ROWS):
+        #         if AI_state[column][row]['token_color'] == AI_token:
+        #             AI_token_remain_grid_coord.append((column, row))
+        #         elif AI_state[column][row]['token_color'] == human_token:
+        #             human_token_remain_grid_coord.append((column, row))
+        #
+        # # Check for draw by repetition
+        # if previous_states.count(AI_state) >= 3:
+        #     show_game_results('', '', True)
+        #     return
+        #
+        # # Check for draw by the triple Ko rule
+        # if len(previous_states) >= 6 and previous_states[-1] == previous_states[-3] == previous_states[-5] \
+        #         and previous_states[-2] == previous_states[-4] == previous_states[-6]:
+        #     show_game_results('', '', True)
+        #     return
+        #
+        # # Check for draw by pattern 1 (applies to 3x3, 5x5, and 9x5 grids)
+        # if turn == 'AI' and AI_state[self.board.GRID_COLS // 2][self.board.GRID_ROWS // 2][
+        #     'token_color'] == AI_token \
+        #         and len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
+        #     for (column, row) in AI_token_remain_grid_coord:
+        #         if column != self.board.GRID_COLS // 2 and row != self.board.GRID_ROWS // 2:
+        #             AI_token_non_central_displacement = (
+        #                 column - self.board.GRID_COLS // 2, row - self.board.GRID_ROWS // 2)
+        #     for (column, row) in human_token_remain_grid_coord:
+        #         human_token_non_central_displacement = (
+        #             self.board.GRID_COLS // 2 - column, self.board.GRID_ROWS // 2 - row)
+        #
+        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
+        #         show_game_results('', '', True)
+        #         return
+        #
+        # # Check for draw by pattern 2 (applies to 5x5 and 9x5 grids)
+        # if self.board.GRID_COLS >= 5 and turn == 'Human' and \
+        #         AI_state[self.board.GRID_COLS // 2][self.board.GRID_ROWS // 2]['token_color'] == human_token \
+        #         and len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
+        #     for (column, row) in human_token_remain_grid_coord:
+        #         if column != self.board.GRID_COLS // 2 and row != self.board.GRID_ROWS // 2:
+        #             human_token_non_central_displacement = (
+        #                 column - self.board.GRID_COLS // 2, row - self.board.GRID_ROWS // 2)
+        #     for (column, row) in AI_token_remain_grid_coord:
+        #         AI_token_non_central_displacement = (
+        #             self.board.GRID_COLS // 2 - column, self.board.GRID_ROWS // 2 - row)
+        #
+        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
+        #         show_game_results('', '', True)
+        #         return
+
+        # AI_token_remain_grid_coord = []
+        # human_token_remain_grid_coord = []
+        # AI_token_non_central_displacement = ()
+        # human_token_non_central_displacement = ()
+        #
+        # for column in range(self.board.GRID_COLS):
+        #     for row in range(self.board.GRID_ROWS):
+        #         if AI_state[column][row]['token_color'] == AI_token:
+        #             AI_token_remain_grid_coord.append((column, row))
+        #         if AI_state[column][row]['token_color'] == human_token:
+        #             human_token_remain_grid_coord.append((column, row))
+        #
+        # # pattern 1
+        # if turn == 'AI' and AI_state[1][1]['token_color'] == AI_token and \
+        #     len(AI_token_remain_grid_coord) == 2 and len(human_token_remain_grid_coord) == 1:
+        #     for (column, row) in AI_token_remain_grid_coord:
+        #         if column != 1 and row != 1:
+        #             AI_token_non_central_displacement = (column - 1, row - 1)
+        #     for (column, row) in human_token_remain_grid_coord:
+        #         human_token_non_central_displacement = (1 - column, 1 - row)
+        #
+        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
+        #         show_game_results('', '', True)
+        #
+        # # pattern 2
+        # if turn == 'Human' and AI_state[1][1]['token_color'] == human_token and \
+        #     len(AI_token_remain_grid_coord) == 1 and len(human_token_remain_grid_coord) == 2:
+        #     for (column, row) in human_token_remain_grid_coord:
+        #         if column != 1 and row != 1:
+        #             human_token_non_central_displacement = (column - 1, row - 1)
+        #     for (column, row) in AI_token_remain_grid_coord:
+        #         AI_token_non_central_displacement = (1 - column, 1 - row)
+        #
+        #     if AI_token_non_central_displacement == human_token_non_central_displacement:
+        #         show_game_results('', '', True)
 
     # def show_game_results(self):
     #     pass

@@ -158,8 +158,8 @@ class Player:
             else:
                 stats.winner_str('Player_1')
 
-        if game is not None:
-            game.check_for_draw()  # TODO
+        # if game is not None:  # MCTS doesn't pass the if since game is None
+        #     game.check_for_draw()  # TODO
 
         return movable_token_table
 
@@ -170,11 +170,14 @@ class Human(Player):
         hint_button_clicked = game.hint_button_rect.collidepoint(mouse_x - game.button_hx, mouse_y - game.button_hy)
         if hint_button_clicked:
             return True
+
     def make_turn(self, grid, game):
 
         human_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
-        hint = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
-        calc_hint = hint.give_hint(grid, game)
+
+        if human_movable_token_table != {}:
+            hint = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
+            calc_hint = hint.give_hint(grid, game)
 
         if self.terminal_test(grid):
             pygame.time.wait(1000)
@@ -270,8 +273,10 @@ class AI(Player):
         elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
 
-        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS':
-            self.ai_player = MonteCarloTS(self.token_color, self.board, None, self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS < 9:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (float('inf'), 100), self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 9:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 10), self.algorithm, )
 
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
             self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
@@ -283,8 +288,10 @@ class AI(Player):
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 4, self.algorithm)
 
-        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS':
-            self.ai_player = MonteCarloTS(self.token_color, self.board, None, self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS < 9:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (float('inf'), 500), self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 9:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 20), self.algorithm)
 
     def make_turn(self, grid, game):
         ai_movable_token_table = self.check_movable_token_table(self.token_color, grid, game)
@@ -648,13 +655,13 @@ class MonteCarloTS(AI):
         self.root = None
 
     def play(self, ai_movable_token_table, game, grid):
-        initial_token_coord, final_token_coord = self.mct_search(grid, game)
+        initial_token_coord, final_token_coord = self.mct_search(grid, game, self.difficulty[0], self.difficulty[1])
         self.wait_a_second(game, initial_token_coord)
         new_grid = game.make_move(self.token_color, grid, initial_token_coord, final_token_coord, self.board,
                                   False)
         return new_grid
 
-    def mct_search(self, grid, game, max_rollout_depth=float('inf'), n_iterations=1000, epsilon=2):
+    def mct_search(self, grid, game, max_rollout_depth=500, n_iterations=20, epsilon=2):
         self.root = Node(grid, game, self.token_color, self.board, self.difficulty, self.algorithm)
         for _ in range(n_iterations):
             self.run_iteration(max_rollout_depth)

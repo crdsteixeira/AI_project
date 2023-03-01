@@ -1,3 +1,5 @@
+import copy
+
 import pygame
 import sys
 from pygame.locals import *
@@ -39,14 +41,14 @@ grid = board.get_new_grid()
 
 if chosen_player_1 == "Human":
     player_1 = Human(config.WHITE, board, difficulty)
-    ## hint button
+
 else:
     player_1 = AI(config.WHITE, board, difficulty, chosen_player_1)
     player_1.initialize_ai_player()
 
 if chosen_player_2 == "Human":
     player_2 = Human(config.BLACK, board, difficulty)
-    ## hint button
+
 else:
     player_2 = AI(config.BLACK, board, difficulty, chosen_player_2)
     player_2.initialize_ai_player()
@@ -61,17 +63,21 @@ else:
 
 turn = config.WHITE
 tic = pygame.time.get_ticks()  # initiate timer
+previous_states = [] #[(grid, turn)]
 
 while grid:
     game.draw_grid(grid, board)
+    previous_states.append((copy.deepcopy(grid), turn))
 
     if player_1.token_color == turn:
         grid = player_1.make_turn(grid, game)
-
     elif player_2.token_color == turn:
         grid = player_2.make_turn(grid, game)
 
     turn = config.WHITE if turn == config.BLACK else config.BLACK
+    if grid:
+        print(grid)
+        game.check_for_draw(grid, turn, previous_states, board, player_1, player_2)
 
 # send info to export file 
 stats.options_prepare_row(options)

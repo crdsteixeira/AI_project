@@ -427,13 +427,14 @@ class Game:
         if stats is not None:
 
             # find the real loser and winner
-            winner_str = options[stats.winner.lower()]
-            if winner_str == 'player_1':
+            winner = stats.winner.lower()
+            if winner == 'player_1':
                 loser = 'Player_2'
             else:
                 loser = 'Player_1'
 
             loser_str = options[loser.lower()]
+            winner_str = options[winner]
 
             winner_surf = self.EXTRA_BIG_FONT.render('Winner: ' + stats.winner + ' (' + winner_str + ')', True,
                                                      config.GREEN)

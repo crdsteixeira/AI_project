@@ -12,7 +12,7 @@ Classes and functions:
 - Human
     - make_turn()
 - AI(Player)
-    - initialize_ai_player() TODO: shouldnt this be inside __init__?
+    - initialize_ai_player()
     - make_turn()
     - evaluate_current_state()
     - terminal_test()
@@ -384,7 +384,7 @@ class AI(Player):
         ai_score = (ai_token_remain - human_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
         human_score = (human_token_remain - ai_token_remain) * 1.0 / (ai_token_remain + human_token_remain)
 
-        print("Current scores: ", ai_score, human_score)
+        #print("Current scores: ", ai_score, human_score)
         if bias:
             return [ai_score, human_score]
         if ai_token_remain == 0:
@@ -667,14 +667,14 @@ class MonteCarloTS(AI):
             # to select best child go for exploitation only
         best_child = self.root.best_child(epsilon=epsilon)
         action, node = best_child.parent
-        print(action, node.results)
+        #print(action, node.results)
         return action
 
     def run_iteration(self, max_rollout_depth):
         v = self.tree_policy()
         reward = v.rollout(max_depth=max_rollout_depth)
         v.backpropagate(reward)
-        print("Reward: ", reward)
+        #print("Reward: ", reward)
 
     def tree_policy(self):
         current_node = self.root

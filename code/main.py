@@ -99,7 +99,7 @@ while grid:
 
     turn = config.WHITE if turn == config.BLACK else config.BLACK
     if grid:
-        print(grid)
+        #print(grid)
         game.check_for_draw(grid, turn, previous_states, board, player_1, player_2)
     else:
         if turn == config.WHITE:

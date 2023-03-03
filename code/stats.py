@@ -20,15 +20,18 @@ import config
 import pygame
 import sys
 
+#import main
 
-def options_prepare_row(options_list):
+
+def options_prepare_row(options_list, previous_states):
     player1 = options_list['player_1']
     player2 = options_list['player_2']
     board_size = options_list['size']
     difficulty = options_list['difficulty']
+    len_play = len(previous_states)
 
     global options
-    options = [player1, player2, board_size, difficulty]
+    options = [player1, player2, board_size, difficulty, len_play]
 
 
 def winner_str(winner_str):

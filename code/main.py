@@ -20,7 +20,6 @@ Functions:
 - check for draw
 """
 
-
 import copy
 
 import pygame
@@ -77,12 +76,46 @@ else:
     player_2.initialize_ai_player()
 
 # board = Board(9, 5)
-# grid = board.get_new_grid()
+
+# boards = [(3, 3), (5, 5), (9, 5)]
+# difficulties = ['Easy', 'Medium', 'Hard']
+# algorithms = ['Minimax', 'Minimax_AlphaBeta', 'Monte_Carlo_TS']
+# players = [(config.WHITE, config.BLACK), (config.BLACK, config.WHITE) ]
 #
-# player_1 = AI(config.WHITE, board, difficulty='Medium', algorithm='Minimax_AlphaBeta')
-# player_1.initialize_ai_player()
-# player_2 = AI(config.BLACK, board, difficulty='Medium', algorithm='Monte_Carlo_TS')
-# player_2.initialize_ai_player()
+# for size in boards:
+#     for level_1 in difficulties:
+#         for level_2 in difficulties:
+#             for alg_1 in algorithms:
+#                 for alg_2 in algorithms:
+#                     for order in players:
+#                         # Initialize pygame and the main clock
+#                         pygame.init()
+#                         main_clock = pygame.time.Clock()
+#
+#                         # Set up the window
+#                         WINDOW_SURF = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
+#                         pygame.display.set_caption('Fanorona')
+#
+#                         # Set up the fonts
+#                         SMALL_FONT = pygame.font.Font(None, 10)
+#                         BIG_FONT = pygame.font.Font(None, 20)
+#                         EXTRA_BIG_FONT = pygame.font.Font(None, 35)
+#                         game = Game(WINDOW_SURF, main_clock, BIG_FONT)
+#
+#                         options = {'player_1': alg_1,
+#                                    'player_2': alg_2,
+#                                    'size': [size[0], size[1]],
+#                                    'difficulty': (level_1, level_2)
+#                                    }
+#                         game.selected_options = options
+#                         print(options)
+#                         board = Board(size[0], size[1])
+#                         grid = board.get_new_grid()
+#                         player_1 = AI(order[0], board, difficulty=level_1, algorithm=alg_1)
+#                         player_1.initialize_ai_player()
+#                         player_2 = AI(order[1], board, difficulty=level_2, algorithm=alg_2)
+#                         player_2.initialize_ai_player()
+
 
 turn = config.WHITE
 tic = pygame.time.get_ticks()  # initiate timer
@@ -99,8 +132,10 @@ while grid:
 
     turn = config.WHITE if turn == config.BLACK else config.BLACK
     if grid:
-        #print(grid)
-        game.check_for_draw(grid, turn, previous_states, board, player_1, player_2)
+        # print(grid)
+        if game.check_for_draw(grid, turn, previous_states, board, player_1, player_2):
+            stats.winner_str('Draw')
+            break
     else:
         if turn == config.WHITE:
             # Export results to csv file
@@ -108,8 +143,8 @@ while grid:
         else:
             stats.winner_str('Player_2')
 
-# send info to export file 
-stats.options_prepare_row(options)
+# send info to export file
+stats.options_prepare_row(options, previous_states)
 toc = pygame.time.get_ticks()  # finalize timer
 timee = (toc - tic) / 1000  # save time in seconds
 stats.duration(timee)  # save time in seconds

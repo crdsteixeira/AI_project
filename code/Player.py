@@ -82,10 +82,11 @@ class Player:
         pygame.time.wait(1000)
 
     def evaluate_current_state(self, grid):
-        # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
-        #    NUMBER OF PIECES
-        #    WEAK/STRONG INTERSECTION POINTS
-        # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        ''' CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+            NUMBER OF PIECES
+           WEAK/STRONG INTERSECTION POINTS
+        and returns a % value of + or - . The more + the higher the chance of winning for AI '''
+
         # print("when evalation function called, AI_state cutoff\n")
         ai_token_remain = 0
         human_token_remain = 0
@@ -272,22 +273,26 @@ class AI(Player):
         elif self.difficulty == 'Medium' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 2, self.algorithm)
 
-        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS < 9:
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 3:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 100), self.algorithm)
+        elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 5:
             self.ai_player = MonteCarloTS(self.token_color, self.board, (float('inf'), 100), self.algorithm)
         elif self.difficulty == 'Medium' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 9:
             self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 10), self.algorithm, )
 
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS < 9:
-            self.ai_player = Minimax(self.token_color, self.board, 5, self.algorithm)
-        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
             self.ai_player = Minimax(self.token_color, self.board, 4, self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Minimax' and self.board.GRID_COLS == 9:
+            self.ai_player = Minimax(self.token_color, self.board, 3, self.algorithm)
 
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS < 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 5, self.algorithm)
         elif self.difficulty == 'Hard' and self.algorithm == 'Minimax_AlphaBeta' and self.board.GRID_COLS == 9:
             self.ai_player = MinimaxAlphaBeta(self.token_color, self.board, 4, self.algorithm)
 
-        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS < 9:
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 3:
+            self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 200), self.algorithm)
+        elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 5:
             self.ai_player = MonteCarloTS(self.token_color, self.board, (float('inf'), 500), self.algorithm)
         elif self.difficulty == 'Hard' and self.algorithm == 'Monte_Carlo_TS' and self.board.GRID_COLS == 9:
             self.ai_player = MonteCarloTS(self.token_color, self.board, (500, 20), self.algorithm)
@@ -300,10 +305,10 @@ class AI(Player):
             return False
 
     def evaluate_current_state_a(self, grid):
-        # CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
-        #    NUMBER OF PIECES
-        #    WEAK/STRONG INTERSECTION POINTS
-        # and returns a % value of + or - . The more + the higher the chance of winning for AI
+        """CALCULATES AI VS HUMAN SCORE ACCORDING TO THEIR:
+           NUMBER OF PIECES
+            WEAK/STRONG INTERSECTION POINTS
+         and returns a % value of + or - . The more + the higher the chance of winning for AI """
         # print("when evalation function called, AI_state cutoff\n")
         ai_token_remain = 0
         human_token_remain = 0
@@ -435,10 +440,10 @@ class AI(Player):
 
 class Random(AI):
     def play(self, ai_movable_token_table, game, grid):
-        if self.terminal_test(grid):
-            pygame.time.wait(1000)
-            pygame.quit()
-            sys.exit()
+        # if self.terminal_test(grid):
+        #     pygame.time.wait(1000)
+        #     pygame.quit()
+        #     sys.exit()
 
         initial_token_coord = list(ai_movable_token_table.keys())[0]
         final_token_coord = list(ai_movable_token_table[initial_token_coord].keys())[0]
@@ -472,9 +477,12 @@ class Minimax(AI):
 
         current_v = float('-inf')
 
-        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
-            self.is_cutoff = True
-            return self.evaluate_current_state_a(grid)
+        # commented do that minimax makes at least one move
+
+        # if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+        #    self.is_cutoff = True
+        #    print(f"cuttoff: {self.is_cutoff}")
+        #    return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             return self.utility(grid)
@@ -559,15 +567,18 @@ class MinimaxAlphaBeta(AI):
 
         self.total_node_generated += 1
 
+
         if depth >= self.depth_of_game_tree:
             self.depth_of_game_tree = depth
 
         current_alpha = alpha
         current_beta = beta
 
-        if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
-            self.is_cutoff = True
-            return self.evaluate_current_state_a(grid)
+        # commented do that minimax makes at least one move# commented do that minimax makes at least one move
+
+        # if depth >= int(self.difficulty):  # cutoff setting, maximum level AI can search through
+        #     self.is_cutoff = True
+        #     return self.evaluate_current_state_a(grid)
 
         if self.terminal_test(grid):
             # print("return since max_value terminated ")
@@ -667,14 +678,14 @@ class MonteCarloTS(AI):
             # to select best child go for exploitation only
         best_child = self.root.best_child(epsilon=epsilon)
         action, node = best_child.parent
-        #print(action, node.results)
+        # print(action, node.results)
         return action
 
     def run_iteration(self, max_rollout_depth):
         v = self.tree_policy()
         reward = v.rollout(max_depth=max_rollout_depth)
         v.backpropagate(reward)
-        #print("Reward: ", reward)
+        # print("Reward: ", reward)
 
     def tree_policy(self):
         current_node = self.root

@@ -360,7 +360,7 @@ class Game:
         # Check for draw by repetition
         if previous_states_dict.get((self.hash_list_of_dicts(grid), turn), 0) >= 3:
             self.show_results(self.selected_options)
-            return
+            return True
 
         # Check for draw by the triple Ko rule
         if len(previous_states) >= 6 and previous_states_dict.get((self.hash_list_of_dicts(grid), turn),
@@ -370,7 +370,7 @@ class Game:
             (self.hash_list_of_dicts(grid), turn), -4) == previous_states_dict.get(
             (self.hash_list_of_dicts(grid), turn), -6):
             self.show_results(self.selected_options)
-            return
+            return True
 
         player_1_token_non_central_displacement = None
         player_2_token_non_central_displacement = None
@@ -390,7 +390,7 @@ class Game:
             if player_1_token_non_central_displacement is not None and \
                     player_1_token_non_central_displacement == player_2_token_non_central_displacement:
                 self.show_results(self.selected_options)
-                return
+                return True
 
         # Check for draw by pattern 2 (applies to 5x5 and 9x5 grids)
         if board.GRID_COLS >= 5 and turn == player_2.token_color and \
@@ -407,7 +407,7 @@ class Game:
             if player_2_token_non_central_displacement is not None and \
                     player_1_token_non_central_displacement == player_2_token_non_central_displacement:
                 self.show_results(self.selected_options)
-                return
+                return True
 
     def show_results(self, options):
         # To hide Hint button
@@ -428,13 +428,18 @@ class Game:
 
             # find the real loser and winner
             winner = stats.winner.lower()
-            if winner == 'player_1':
+            if winner == 'draw':
+                loser = 'draw'
+                winner_str = 'Draw'
+                loser_str = "Draw"
+            elif winner == 'player_1':
                 loser = 'Player_2'
+                loser_str = options[loser.lower()]
+                winner_str = options[winner]
             else:
                 loser = 'Player_1'
-
-            loser_str = options[loser.lower()]
-            winner_str = options[winner]
+                loser_str = options[loser.lower()]
+                winner_str = options[winner]
 
             winner_surf = self.EXTRA_BIG_FONT.render('Winner: ' + stats.winner + ' (' + winner_str + ')', True,
                                                      config.GREEN)

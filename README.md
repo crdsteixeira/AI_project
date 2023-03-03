@@ -14,7 +14,7 @@ The game is implemented in python and works with versions >= 3.0.
 
 
 ## Get Python and dependencies
-- You can download the *3.6+* version of Python [here](https://www.python.org/downloads/).
+- You can download the *3.0+* version of Python [here](https://www.python.org/downloads/).
 - (Don't forget to add python to the path if you are on Windows)
 - Next, install the dependencies for the game. For that just run the following command (Note that you may replace pip with pip3 if you have different versions of python).
 

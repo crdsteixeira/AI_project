@@ -1,1 +1,4 @@
 Human,Minimax_AlphaBeta,Fanoron-Tsivy(9 X 5),Hard,33,280.749,Player_2
+Minimax_AlphaBeta,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Medium,13,24.64,Player_2
+Monte_Carlo_TS,Minimax_AlphaBeta,Fanoron-Telo (3 X 3),Medium,10,22.306,Player_1
+Human,Minimax_AlphaBeta,Fanoron-Dimy (5 X 5),Medium,21,94.678,Player_2
